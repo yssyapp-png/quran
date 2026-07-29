@@ -6,6 +6,7 @@ import '../models/bookmark.dart';
 class BookmarkService {
   static const _bookmarksKey = 'bookmarks';
   static const _lastReadKey = 'last_read';
+  static const _readPagesKey = 'khatma_read_pages';
 
   Future<List<Bookmark>> getBookmarks() async {
     final prefs = await SharedPreferences.getInstance();
@@ -48,5 +49,24 @@ class BookmarkService {
     final json = jsonDecode(raw);
     return Bookmark(
         suraNo: json['suraNo'], suraName: json['suraName'], ayaNo: json['ayaNo']);
+  }
+
+  /// تتبع "الختمة": مجموعة أرقام الصفحات (1..604) التي وسمها المستخدم كمقروءة.
+  Future<Set<int>> getReadPages() async {
+    final prefs = await SharedPreferences.getInstance();
+    final raw = prefs.getStringList(_readPagesKey) ?? [];
+    return raw.map(int.parse).toSet();
+  }
+
+  Future<void> markPageRead(int page) async {
+    final prefs = await SharedPreferences.getInstance();
+    final pages = await getReadPages();
+    pages.add(page);
+    await prefs.setStringList(_readPagesKey, pages.map((e) => e.toString()).toList());
+  }
+
+  Future<void> resetKhatma() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove(_readPagesKey);
   }
 }

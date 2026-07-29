@@ -11,6 +11,30 @@ class AppColors {
   static const inkGreen = Color(0xFF0F3D3A);
 }
 
+/// ألوان مخصّصة لشاشة قراءة المصحف في الوضع الليلي تحديدًا — أسود محايد
+/// دافئ بدل الأخضر الداكن العام للتطبيق، أقرب لتجربة القراءة الليلية
+/// المريحة في تطبيقات القراءة المعروفة (خلفية شبه سوداء، وسطح الصفحة
+/// أفتح قليلًا منها بدرجة واحدة فقط لإبراز حواف الصفحة دون وهج).
+class MushafDarkColors {
+  static const background = Color(0xFF0B0B0C);
+  static const page = Color(0xFF181818);
+  static const overlay = Color(0xFF0F1113);
+  static const divider = Color(0xFF2E2E2E);
+  static const shadow = Color(0x66000000);
+}
+
+/// باقة ألوان اختيارية لـ"الإطار الفاخر" فقط — مستوحاة من لون الزخرفة
+/// الفعلي داخل صفحتي الفاتحة وأول البقرة نفسيهما (المربع الأخضر الفاتح
+/// خلف النص)، لمن يفضّل انسجامًا بصريًا مع الصفحة بدل الذهبي الكلاسيكي.
+/// لا تُستخدم في أي مكان آخر بالتطبيق ولا تؤثر على صورة المصحف نفسها.
+class MushafFrameHarmonyColors {
+  static const background = Color(0xFFF8F4E8);
+  static const primaryGreen = Color(0xFF9FB78D);
+  static const darkGreen = Color(0xFF6E8B63);
+  static const gold = Color(0xFFC8A55A);
+  static const outline = Color(0xFF5A6A4C);
+}
+
 class AppTheme {
   static ThemeData get light => ThemeData(
         useMaterial3: true,
