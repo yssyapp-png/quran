@@ -1,0 +1,51 @@
+Resolving dependencies...
+Downloading packages...
+  audio_session 0.1.25 (0.2.4 available)
+  cli_util 0.4.2 (0.5.2 available)
+  flutter_launcher_icons 0.13.1 (0.14.4 available)
+  flutter_lints 3.0.2 (6.0.0 available)
+  google_fonts 6.3.3 (8.2.1 available)
+  hooks 2.0.2 (2.1.0 available)
+  jni 1.0.2 (1.0.3 available)
+  just_audio 0.9.46 (0.10.6 available)
+  lints 3.0.0 (6.1.0 available)
+  matcher 0.12.19 (0.12.20 available)
+  meta 1.18.0 (1.19.0 available)
+  record_use 0.6.0 (1.0.0 available)
+  test_api 0.7.11 (0.7.13 available)
+  vector_math 2.2.0 (2.4.2 available)
+Got dependencies!
+14 packages have newer versions incompatible with dependency constraints.
+Try `flutter pub outdated` for more information.
+00:00 +0: loading /Users/sh/Developer/quran/test/models/bookmark_test.dart
+00:00 +0: /Users/sh/Developer/quran/test/models/reciter_test.dart: audioUrl يبني رابط everyayah.com بالصيغة الصحيحة (سورة/آية بثلاث خانات)
+00:00 +1: /Users/sh/Developer/quran/test/models/reciter_test.dart: audioUrl يضبط الأصفار الناقصة حتى لأرقام السور/الآيات الكبيرة (٣ أرقام)
+00:00 +2: /Users/sh/Developer/quran/test/models/reciter_test.dart: Reciters.byId يرجع القارئ الصحيح لمعرف موجود
+00:00 +3: /Users/sh/Developer/quran/test/models/reciter_test.dart: Reciters.byId يرجع القارئ الافتراضي لمعرف غير موجود
+00:00 +4: /Users/sh/Developer/quran/test/models/reciter_test.dart: Reciters.all تحتوي القارئ الافتراضي على الأقل
+00:00 +5: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +6: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +7: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +8: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +9: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +10: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +11: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +12: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +13: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +14: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +15: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +16: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +17: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +18: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +19: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +20: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +21: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +22: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +23: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +24: /Users/sh/Developer/quran/test/widget_test.dart: يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها
+00:00 +25: /Users/sh/Developer/quran/test/models/local_ayah_test.dart: LocalAyah.fromJson يقرأ كل الحقول المطلوبة بأسمائها بصيغة snake_case
+00:00 +26: /Users/sh/Developer/quran/test/models/local_ayah_test.dart: LocalAyah.fromJson يستخدم نص فارغ عند غياب حقول النص الاختيارية
+00:00 +27: /Users/sh/Developer/quran/test/models/bookmark_test.dart: key يتكوّن من رقم السورة والآية بصيغة سورة:آية
+00:00 +28: /Users/sh/Developer/quran/test/models/bookmark_test.dart: toJson يحوّل كل الحقول بشكل صحيح
+00:00 +29: /Users/sh/Developer/quran/test/models/bookmark_test.dart: fromJson يبني نسخة مطابقة لما تم تحويله بـ toJson (round-trip)
+00:00 +30: All tests passed!
