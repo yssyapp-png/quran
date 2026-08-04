@@ -1,24 +1,27 @@
-// اختبار إقلاع أساسي (smoke test) لتطبيق القرآن الكريم.
-//
-// ملاحظة: هذا الملف كان يحوي سابقًا اختبار "العدّاد" الافتراضي من قالب
-// Flutter الأساسي (يشير إلى صنف MyApp غير الموجود في هذا المشروع أصلًا)،
-// وكان يفشل دائمًا لعدم تعديله منذ إنشاء المشروع. استُبدل هنا باختبار حقيقي
-// يتحقق أن شاشة الصفحة الرئيسية (HomeScreen) تُقلع وتُبنى بدون أي استثناء.
-
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 import 'package:quran/main.dart';
 
+/// اختبار دخان (smoke test) بسيط: يتأكد أن الشاشة الرئيسية تُبنى بنجاح
+/// وأن عنوانها يظهر — مؤشر موثوق لا يتأثر بطول القائمة أو حجم شاشة
+/// الاختبار (بعكس عناصر أسفل قائمة قابلة للتمرير قد لا تُبنى في بيئة
+/// الاختبار المحدودة).
 void main() {
-  testWidgets('يُقلع تطبيق القرآن الكريم بدون أخطاء ويعرض الشاشة الرئيسية',
-      (WidgetTester tester) async {
+  setUp(() {
+    SharedPreferences.setMockInitialValues({});
+  });
+
+  testWidgets('يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها', (WidgetTester tester) async {
     await tester.pumpWidget(const QuranApp());
-    // إطار واحد كافٍ للتأكد من عدم وجود استثناء أثناء البناء الأولي؛ لا
-    // ننتظر اكتمال أي عمليات تحميل غير متزامنة (بيانات السور، الإعدادات...)
-    // لأن هذا اختبار إقلاع بسيط فقط وليس اختبار وظائف الشاشة الرئيسية.
+    // ملاحظة: لا نستخدم pumpAndSettle هنا عمداً — أثناء تحميل قائمة السور
+    // (Future) تُعرض CircularProgressIndicator، وهي حركة متكررة بلا نهاية
+    // بطبيعتها، فتجعل pumpAndSettle "ينتظر إلى الأبد" ويفشل بخطأ انتهاء
+    // المهلة رغم أن الشاشة بُنيت بنجاح فعلاً. عنوان AppBar يظهر في أول
+    // إطار فوراً بغض النظر عن حالة تحميل البيانات، فيكفي pump واحد.
     await tester.pump();
 
-    expect(tester.takeException(), isNull);
+    expect(find.text('القرآن الكريم'), findsOneWidget);
   });
 }
