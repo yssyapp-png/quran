@@ -50,6 +50,9 @@ class LocalSurahInfo {
   final String nameEn;
   final int ayahCount;
   final int firstPage;
+  // مكية أم مدنية — تصنيف ثابت ومعروف تاريخيًا لكل سورة (86 مكية + 28 مدنية)،
+  // غير موجود في بيانات المصحف الخام فأُضيف يدويًا في [kMeccanSurahNumbers].
+  final bool isMeccan;
 
   LocalSurahInfo({
     required this.number,
@@ -57,5 +60,13 @@ class LocalSurahInfo {
     required this.nameEn,
     required this.ayahCount,
     required this.firstPage,
+    required this.isMeccan,
   });
 }
+
+/// أرقام السور المدنية الـ28 (الباقي من الـ114 سورة مكي) — تصنيف تاريخي
+/// معروف ومتفق عليه في كل المصاحف المطبوعة.
+const Set<int> kMedinanSurahNumbers = {
+  2, 3, 4, 5, 8, 9, 13, 22, 24, 33, 47, 48, 49, 55,
+  57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 76, 98, 99, 110,
+};

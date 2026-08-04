@@ -8,7 +8,6 @@ import '../services/bookmark_service.dart';
 import '../services/quran_local_service.dart';
 import '../services/settings_service.dart';
 import '../theme/app_theme.dart';
-import '../theme/mushaf_frame_controller.dart';
 import '../theme/theme_controller.dart';
 import '../widgets/tafsir_sheet.dart';
 import 'downloads_screen.dart';
@@ -39,22 +38,33 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
   final SettingsService _settingsService = SettingsService();
   final AudioPlayer _player = AudioPlayer();
   late final PageController _controller;
-  final TransformationController _zoomController = TransformationController();
+  // متحكم تحويل (تكبير/تحريك) مستقل لكل صفحة على حدة، بدل متحكم واحد
+  // مشترك بين كل الصفحات. المشكلة سابقًا: PageView يُبقي الصفحة الحالية
+  // والمجاورة لها محمّلتين في الذاكرة لسلاسة السحب، وكانتا تتشاركان نفس
+  // متحكم التحويل، فيصبح تكبير/تصغير أي صفحة يؤثر فورًا على الصفحة
+  // المجاورة أيضًا وكأنهما "مرتبطتان معًا". الآن كل رقم صفحة له متحكمه
+  // الخاص المنفصل تمامًا عن باقي الصفحات.
+  final Map<int, TransformationController> _zoomControllers = {};
+  TransformationController _controllerFor(int page) =>
+      _zoomControllers.putIfAbsent(page, () => TransformationController());
   late int _currentPage;
   bool _immersive = false;
-  // الصور الأصلية تحتوي هامشًا أبيض واسعًا حول الإطار المزخرف (جزء من
-  // تصميم الصفحة المطبوعة نفسها)، فنبدأ بتكبير أساسي بسيط يقتطع هذا الهامش
-  // الفارغ فقط. صفحتا الفاتحة وأول البقرة فيهما زخرفة وهامش أوسع من بقية
-  // الصفحات، فتحتاجان تكبيرًا أساسيًا أكبر (١.٥×) لتظهرا بنفس حجم النص
-  // المعتاد في باقي الصفحات (١.١٥×). (أُزيل خيار "حجم صفحة المصحف" من
-  // الإعدادات بناءً على ملاحظة المستخدم: الحجم العادي هو الأنسب والأكثر
-  // تطابقًا مع تصميم الصفحة الرسمية، فصار هذا الحجم الأساسي ثابتًا دائمًا.)
-  double _baseZoomFor(int page) => (page == 1 || page == 2) ? 1.5 : 1.15;
+  // نعرض صورة الصفحة بـ BoxFit.contain داخل SizedBox.expand (أنظر build())،
+  // فتُحسب نسبة التكبير المطلوبة لملء أكبر مساحة ممكنة من الشاشة تلقائيًا
+  // وبدقة رياضية بحتة اعتمادًا على أبعاد شاشة الجهاز الفعلية — مع إبقاء
+  // الصفحة كاملة ظاهرة بدون أي اقتصاص لأطرافها (بخلاف BoxFit.cover الذي
+  // يقتطع الأطراف)، وبدون أي انحراف يمين/يسار على أي حجم شاشة.
+  // صفحتا الفاتحة وأول البقرة (1 و2) بحاجة لحجم أكبر من بقية الصفحات
+  // بمقدار درجة ونصف من درجة التكبير اليدوي (كل درجة = 0.5×، بنفس مقدار
+  // أزرار التكبير) بناءً على طلب المستخدم، فتُعرضان أكبر من الباقي افتراضيًا.
+  // صُغِّرت باقي صفحات المصحف ربع درجة أخرى (0.0625) من 1.3125 إلى 1.25،
+  // مع إبقاء صفحتي الفاتحة وأول البقرة عند 1.75 دون تغيير.
+  double _baseZoomFor(int page) => (page == 1 || page == 2) ? 1.75 : 1.25;
   double get _baseZoom => _baseZoomFor(_currentPage);
-  double _zoomScale = 1.25;
-  // الحد الأدنى الفعلي أصبح 1.0 (وليس مساويًا للتكبير الأساسي) حتى يقدر
-  // المستخدم يصغّر يدويًا أكثر من الوضع الافتراضي لو الصفحة ما تناسبه،
-  // ويكبّر لأبعد من ذلك أيضًا — تحكم كامل يناسب كل الصفحات والشاشات.
+  double _zoomScale = 1.0;
+  // يسمح للمستخدم بتكبير الصفحة يدويًا (بالقرص بإصبعين أو بالأزرار) فوق
+  // حالة الملء التلقائي، حتى 4×، وبتصغيرها للحد الأدنى 1× (الملء الكامل
+  // نفسه — لا يمكن التصغير أكثر منه حتى لا تظهر فراغات حول الصفحة).
   static const double _minZoom = 1.0;
   static const double _maxZoom = 4.0;
 
@@ -87,7 +97,9 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
   @override
   void dispose() {
     _controller.dispose();
-    _zoomController.dispose();
+    for (final c in _zoomControllers.values) {
+      c.dispose();
+    }
     _player.dispose();
     super.dispose();
   }
@@ -95,12 +107,14 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
   void _toggleImmersive() => setState(() => _immersive = !_immersive);
 
   /// يكبّر/يصغّر صفحة المصحف حول مركز الشاشة (وليس فقط بالقرص/التصغير باليد).
+  /// يعمل دائمًا على متحكم الصفحة الحالية (_currentPage) وحدها، دون التأثير
+  /// على أي صفحة أخرى محمّلة بجانبها.
   void _setZoom(double newScale) {
     final clamped = newScale.clamp(_minZoom, _maxZoom);
     final size = MediaQuery.of(context).size;
     final dx = size.width / 2 * (1 - clamped);
     final dy = size.height / 2 * (1 - clamped);
-    _zoomController.value = Matrix4.identity()
+    _controllerFor(_currentPage).value = Matrix4.identity()
       ..translate(dx, dy)
       ..scale(clamped);
     setState(() => _zoomScale = clamped);
@@ -400,7 +414,31 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
               onPageChanged: _onPageChanged,
               itemBuilder: (context, index) {
                 final pageNumber = kMushafPageCount - index;
-                return GestureDetector(
+                // نُخفي أي صفحة مجاورة فور بدء الانزلاق الفعلي عنها (بدل تركها
+                // تظهر متتابعة نصفين أثناء السحب)، فيبدو التنقل انتقالًا مباشرًا
+                // من صفحة كاملة لأخرى كاملة، دون منظر "صفحتين مقسومتين" أثناء
+                // تحريك الإصبع. لا نغيّر آلية السحب/اتجاهه نفسها إطلاقًا — فقط
+                // نُخفي العرض المرئي للصفحة غير المستقرة على الشاشة حاليًا.
+                return AnimatedBuilder(
+                  animation: _controller,
+                  builder: (context, child) {
+                    var isSettledHere = index == (_controller.hasClients
+                        ? (_controller.page?.round() ??
+                            _controller.initialPage)
+                        : _controller.initialPage);
+                    if (_controller.hasClients && _controller.page != null) {
+                      final distance = (_controller.page! - index).abs();
+                      isSettledHere = distance < 0.02;
+                    }
+                    return Visibility(
+                      visible: isSettledHere,
+                      maintainState: true,
+                      maintainAnimation: true,
+                      maintainSize: true,
+                      child: child!,
+                    );
+                  },
+                  child: GestureDetector(
                   onTap: _toggleImmersive,
                   child: Padding(
                     // هامش علوي بسيط فقط حتى لا يلامس رأس الصفحة الحافة
@@ -410,9 +448,10 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
                     child: LayoutBuilder(
                       builder: (context, constraints) {
                         return InteractiveViewer(
-                          // نستخدم متحكمًا مشتركًا واحدًا حتى تعمل أزرار تكبير/تصغير
-                          // الصفحة يدويًا بالإضافة إلى القرص التلقائي بإصبعين.
-                          transformationController: _zoomController,
+                          // متحكم مستقل خاص بهذه الصفحة تحديدًا (pageNumber)، حتى
+                          // لا يتأثر تكبير/تحريك أي صفحة بأختها المجاورة المحمّلة
+                          // بجانبها في PageView (أنظر تعليق _zoomControllers أعلاه).
+                          transformationController: _controllerFor(pageNumber),
                           minScale: _minZoom,
                           maxScale: _maxZoom,
                           // نعطّل السحب بإصبع واحد لأنه كان يتعارض مع سحب
@@ -422,160 +461,53 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
                           panEnabled: false,
                           scaleEnabled: true,
                           onInteractionEnd: (_) {
-                            final s = _zoomController.value.getMaxScaleOnAxis();
-                            if (mounted) setState(() => _zoomScale = s);
+                            final s = _controllerFor(pageNumber).value.getMaxScaleOnAxis();
+                            if (mounted && pageNumber == _currentPage) {
+                              setState(() => _zoomScale = s);
+                            }
                           },
                           boundaryMargin: const EdgeInsets.symmetric(horizontal: 200),
                           child: Align(
-                            alignment: Alignment.center,
-                            // نستخدم BoxFit.contain مع تحديد العرض والارتفاع الفعليين
-                            // للمساحة المتاحة معًا (بدل fitHeight وحدها) لضمان ظهور
-                            // إطار الصفحة كاملًا وفي منتصف الشاشة دون أي قص على أي
-                            // مقاس شاشة.
-                            child: ValueListenableBuilder<bool>(
-                              valueListenable: mushafFrameController,
-                              builder: (context, luxuryFrame, _) {
-                                final pageImage = SizedBox.expand(
-                              // نملأ كل المساحة المتاحة (بدل نسبة مئوية محددة
-                              // يدويًا) ونترك BoxFit.contain يتكفّل بإظهار
-                              // الصفحة كاملة دون قص، بأبسط شكل ممكن للكود.
-                              // في الوضع الليلي نقلب ألوان الصفحة فعليًا (خلفية بيضاء
-                              // ← داكنة، حبر أسود ← فاتح) عبر BlendMode.difference، فتصبح
-                              // قراءة مريحة حقيقية في الظلام بدل مجرد تعتيم صورة بيضاء
-                              // ساطعة. هذا فلتر عرض لحظي فقط ولا يغيّر بكسلات الصورة
-                              // الرسمية المخزّنة على الإطلاق (يعود تلقائيًا للوضع
-                              // النهاري الأصلي دون فقد أي تفاصيل).
-                              child: ColorFiltered(
-                                colorFilter: isDark
-                                    ? const ColorFilter.mode(Colors.white, BlendMode.difference)
-                                    : const ColorFilter.mode(Colors.transparent, BlendMode.dst),
-                                child: Image.asset(
-                              'assets/mushaf_pages/$pageNumber.jpg',
-                              fit: BoxFit.contain,
-                              // جودة عرض عالية لضمان وضوح رسم الآيات بدون تشويش
-                              // عند التكبير، وتفادي وميض إعادة التحميل بين الصفحات.
-                              filterQuality: FilterQuality.high,
-                              isAntiAlias: true,
-                              gaplessPlayback: true,
-                              errorBuilder: (context, error, stack) => const Center(
-                                child: Text('تعذر تحميل الصفحة',
-                                    style: TextStyle(color: AppColors.inkGreen)),
-                              ),
+                            // نرفع باقي صفحات المصحف درجة بسيطة للأعلى (مع تقليل
+                            // التوسيط الرأسي درجة بسيطة أيضًا) لتقليل الفراغ السفلي
+                            // الفارغ، مع إبقاء صفحتي الفاتحة وأول البقرة بتوسيطهما
+                            // الرأسي الكامل الأصلي دون أي تغيير كما طلب المستخدم.
+                            alignment: (pageNumber == 1 || pageNumber == 2)
+                                ? Alignment.center
+                                : const Alignment(0, -0.1),
+                            // BoxFit.contain مع SizedBox.expand أدناه يكبّر الصفحة
+                            // تلقائيًا لأقصى حجم ممكن يملأ الشاشة دون قص أي جزء منها،
+                            // مع الحفاظ على تناسبها الأصلي (بدون تمديد/تشويه)، وتوسيط
+                            // تام عبر Align + مصفوفة تحويل بحالة الهوية عند الراحة —
+                            // فلا يحدث أي انحراف نحو اليمين أو اليسار على أي شاشة.
+                            child: SizedBox.expand(
+                              // بدل الانعكاس اللحظي (ColorFilter) الذي كان يشوّه ألوان
+                              // الصفحات المزخرفة، نستخدم الآن صورًا ليلية مُولَّدة مسبقًا
+                              // لكل صفحات المصحف الـ604 (ملف "$pageNumber_dark.jpg" لكل
+                              // صفحة)، فتظهر بجودة وألوان مضبوطة بدقة في الوضع الليلي دون
+                              // أي تأثير جانبي، وتعود صورة النهار الأصلية فورًا عند إيقاف
+                              // الوضع الليلي دون فقد أي تفاصيل من الصورة الرسمية المخزّنة.
+                              child: Image.asset(
+                                isDark
+                                    ? 'assets/mushaf_pages/${pageNumber}_dark.jpg'
+                                    : 'assets/mushaf_pages/$pageNumber.jpg',
+                                fit: BoxFit.contain,
+                                // جودة عرض عالية لضمان وضوح رسم الآيات بدون تشويش
+                                // عند التكبير، وتفادي وميض إعادة التحميل بين الصفحات.
+                                filterQuality: FilterQuality.high,
+                                isAntiAlias: true,
+                                gaplessPlayback: true,
+                                errorBuilder: (context, error, stack) => const Center(
+                                  child: Text('تعذر تحميل الصفحة',
+                                      style: TextStyle(color: AppColors.inkGreen)),
                                 ),
                               ),
-                                );
-                                // "الإطار الفاخر": يملأ كل الهامش الفارغ حول الصفحة (المساحة
-                                // البيضاء الناتجة عن اختلاف نسبة الشاشة عن نسبة الصفحة) بإطار
-                                // ذهبي مزدوج وزخارف في الزوايا الأربع، بنفس روح إطارات المصاحف
-                                // المطبوعة الفاخرة — دون أي تعديل على بكسلات صورة الصفحة نفسها.
-                                // يظهر فقط في صفحتي الفاتحة وأول البقرة (صفحتا الافتتاح
-                                // المزخرفتان أصلاً في تصميم المصحف)، وليس في بقية الصفحات.
-                                final isOpeningPage = pageNumber == 1 || pageNumber == 2;
-                                if (!luxuryFrame || !isOpeningPage) return pageImage;
-                                final frameColor = isDark ? MushafDarkColors.page : AppColors.cream;
-                                // لون الإطار نفسه اختياري (ذهبي كلاسيكي أو أخضر متناسق مع
-                                // زخرفة صفحتي الافتتاح نفسيهما) — خيار ذوقي من الإعدادات لا
-                                // يمس صورة المصحف ولا أي صفحة أخرى.
-                                return ValueListenableBuilder<MushafFrameColorScheme>(
-                                  valueListenable: mushafFrameColorController,
-                                  builder: (context, scheme, _) {
-                                    final accentColor = scheme == MushafFrameColorScheme.harmonyGreen
-                                        ? MushafFrameHarmonyColors.darkGreen
-                                        : AppColors.gold;
-                                    // زخرفة "ماسة" صغيرة داخل مدالية دائرية بحدّ بلون الإطار —
-                                    // تُستخدم في الزوايا الأربع وفي منتصف كل ضلع، بنفس روح
-                                    // المداليات الموجودة تقليديًا على إطارات صفحات المصاحف.
-                                    Widget medallion({double size = 22}) => Container(
-                                          width: size,
-                                          height: size,
-                                          decoration: BoxDecoration(
-                                            shape: BoxShape.circle,
-                                            color: frameColor,
-                                            border: Border.all(color: accentColor, width: 1.4),
-                                          ),
-                                          child: Center(
-                                            child: Icon(Icons.diamond_outlined, size: size * 0.55, color: accentColor),
-                                          ),
-                                        );
-                                    Widget corner({required bool top, required bool left}) => Positioned(
-                                          top: top ? 2 : null,
-                                          bottom: top ? null : 2,
-                                          left: left ? 2 : null,
-                                          right: left ? null : 2,
-                                          child: medallion(),
-                                        );
-                                    Widget edgeMid({required bool top}) => Positioned(
-                                          top: top ? 2 : null,
-                                          bottom: top ? null : 2,
-                                          left: 0,
-                                          right: 0,
-                                          child: Center(child: medallion(size: 18)),
-                                        );
-                                    return Container(
-                                  // يملأ كل المساحة المتاحة (بما فيها الهامش الأبيض الفارغ)
-                                  // بدل الاكتفاء بإطار ضيق حول حواف الصورة فقط.
-                                  width: double.infinity,
-                                  height: double.infinity,
-                                  color: frameColor,
-                                  child: Stack(
-                                    children: [
-                                      Positioned.fill(
-                                        // ثلاثة خطوط متداخلة (سميك ثم رفيع ثم متوسط) بلون
-                                        // الإطار المختار، بدل خط واحد، لإعطاء إحساس "إطار
-                                        // مُزخرف" مرتب بدل حدّ بسيط واحد.
-                                        child: Container(
-                                          margin: const EdgeInsets.all(10),
-                                          padding: const EdgeInsets.all(2.5),
-                                          decoration: BoxDecoration(
-                                            borderRadius: BorderRadius.circular(8),
-                                            border: Border.all(color: accentColor, width: 2.5),
-                                            boxShadow: [
-                                              BoxShadow(
-                                                color: accentColor.withOpacity(0.35),
-                                                blurRadius: 16,
-                                                spreadRadius: 1,
-                                              ),
-                                            ],
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(3),
-                                            decoration: BoxDecoration(
-                                              borderRadius: BorderRadius.circular(5),
-                                              color: frameColor,
-                                              border: Border.all(color: accentColor.withOpacity(0.4), width: 1),
-                                            ),
-                                            child: Padding(
-                                              padding: const EdgeInsets.all(5),
-                                              child: Container(
-                                                decoration: BoxDecoration(
-                                                  borderRadius: BorderRadius.circular(3),
-                                                  border: Border.all(
-                                                      color: accentColor.withOpacity(0.65), width: 1.4),
-                                                ),
-                                                padding: const EdgeInsets.all(6),
-                                                child: pageImage,
-                                              ),
-                                            ),
-                                          ),
-                                        ),
-                                      ),
-                                      corner(top: true, left: true),
-                                      corner(top: true, left: false),
-                                      corner(top: false, left: true),
-                                      corner(top: false, left: false),
-                                      edgeMid(top: true),
-                                      edgeMid(top: false),
-                                    ],
-                                  ),
-                                );
-                                  },
-                                );
-                              },
                             ),
                           ),
                         );
                       },
                     ),
+                  ),
                   ),
                 );
               },
@@ -649,6 +581,9 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
 
   Widget _buildTopBar(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
+    // (أُزيلت شارة اسم/رقم السورة أعلى الشاشة بناءً على طلب المستخدم: اسم
+    // السورة مدمج بالفعل داخل تصميم صفحة المصحف الرسمية نفسها، فلا داعي
+    // لتكراره في شريط علوي منفصل.)
     return SafeArea(
       bottom: false,
       child: Container(
@@ -657,15 +592,21 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
           color: isDark ? MushafDarkColors.overlay : AppColors.inkGreen.withOpacity(0.92),
         ),
         child: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceAround,
-          children: [
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: [
             _topBarAction(
               label: 'الفهرس',
               icon: Icons.list_alt_outlined,
-              onPressed: () => Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const IndexScreen()),
-              ),
+              // الفهرس يُعيد رقم الصفحة المختارة عند الضغط على سورة/جزء بدل
+              // فتح شاشة قراءة جديدة فوق هذه الشاشة؛ هنا ننتقل مباشرة داخل
+              // نفس شاشة المصحف الحالية بدون تكديس شاشات قراءة في السجلّ.
+              onPressed: () async {
+                final page = await Navigator.push<int>(
+                  context,
+                  MaterialPageRoute(builder: (_) => const IndexScreen()),
+                );
+                if (page != null && mounted) _goToPage(page);
+              },
             ),
             _topBarAction(
               label: 'المصحف',
@@ -704,8 +645,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
               icon: Icons.more_horiz,
               onPressed: _showMoreSheet,
             ),
-          ],
-        ),
+              ],
+            ),
       ),
     );
   }

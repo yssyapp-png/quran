@@ -3,9 +3,14 @@ import '../models/juz.dart';
 import '../models/local_ayah.dart';
 import '../services/quran_local_service.dart';
 import '../theme/app_theme.dart';
-import 'mushaf_page_screen.dart';
 
 /// شاشة الفهرس: تصفح السور أو الأجزاء والانتقال المباشر لموضع القراءة.
+///
+/// عند الضغط على سورة أو جزء، تُغلق الشاشة نفسها وتُعيد رقم الصفحة المطلوبة
+/// عبر [Navigator.pop] بدل فتح شاشة مصحف جديدة فوقها مباشرة. هذا يسمح
+/// لمن يفتح الفهرس أثناء القراءة (من داخل صفحة المصحف نفسها) بالانتقال في
+/// نفس الشاشة دون تكديس شاشات قراءة فوق بعضها في سجلّ التنقّل، بينما من
+/// يفتحه من الشاشة الرئيسية يقرر بنفسه فتح شاشة قراءة جديدة بالرقم المُعاد.
 class IndexScreen extends StatefulWidget {
   const IndexScreen({super.key});
 
@@ -40,10 +45,9 @@ class _IndexScreenState extends State<IndexScreen> with SingleTickerProviderStat
         ? await _service.getAyahPage(suraNo, scrollToAya)
         : surah.firstPage;
     if (!mounted) return;
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => MushafPageScreen(initialPage: page)),
-    );
+    // نغلق شاشة الفهرس ونعيد رقم الصفحة فقط؛ القرار في فتح شاشة قراءة
+    // جديدة أو الانتقال داخل الشاشة الحالية يعود للشاشة التي فتحت الفهرس.
+    Navigator.pop(context, page);
   }
 
   @override
@@ -89,7 +93,16 @@ class _IndexScreenState extends State<IndexScreen> with SingleTickerProviderStat
                 child: Text('${s.number}', style: const TextStyle(color: AppColors.gold)),
               ),
               title: Text(s.nameAr, textAlign: TextAlign.right),
-              subtitle: Text('${s.ayahCount} آية • صفحة ${s.firstPage}', textAlign: TextAlign.right),
+              subtitle: Text(
+                '${s.ayahCount} آية • صفحة ${s.firstPage} • ${s.isMeccan ? "مكية" : "مدنية"}',
+                textAlign: TextAlign.right,
+              ),
+              // رمز الكعبة للسور المكية، ورمز المسجد النبوي للسور المدنية —
+              // تمييز بصري سريع لمكان نزول كل سورة أثناء تصفح الفهرس.
+              trailing: Text(
+                s.isMeccan ? '🕋' : '🕌',
+                style: const TextStyle(fontSize: 24),
+              ),
               onTap: () => _openSurah(s.number),
             );
           },

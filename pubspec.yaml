@@ -29,6 +29,8 @@ flutter_launcher_icons:
   min_sdk_android: 21
   remove_alpha_ios: true
 
+# يستبدل شاشة البداية الافتراضية (البيضاء الفارغة) بشاشة بهوية التطبيق
+# (خلفية خضراء داكنة + أيقونة المصحف) في نفس الوضعين الليلي والنهاري.
 flutter_native_splash:
   color: "#0C2320"
   image: assets/icon/app_icon.png
@@ -46,6 +48,6 @@ flutter:
     - assets/data/
     - assets/mushaf_pages/
   fonts:
-    - family: HafsSmart
+    - family: UthmanicHafs
       fonts:
         - asset: assets/fonts/HafsSmart_08.ttf

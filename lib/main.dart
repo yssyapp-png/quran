@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'screens/home_screen.dart';
 import 'theme/app_theme.dart';
-import 'theme/mushaf_frame_controller.dart';
 import 'theme/quran_font_controller.dart';
 import 'theme/theme_controller.dart';
 
@@ -41,8 +40,6 @@ void main() {
 
     await themeController.load();
     await quranFontController.load();
-    await mushafFrameController.load();
-    await mushafFrameColorController.load();
     runApp(const QuranApp());
   }, (error, stack) {
     // أي خطأ غير متزامن (شبكة، تشغيل صوت...) يُسجَّل فقط ولا يُسقط التطبيق.

@@ -45,10 +45,21 @@ class _HomeScreenState extends State<HomeScreen> {
           IconButton(
             tooltip: 'الفهرس (السور/الأجزاء)',
             icon: const Icon(Icons.list_alt_outlined),
-            onPressed: () => Navigator.push(
-              context,
-              MaterialPageRoute(builder: (_) => const IndexScreen()),
-            ),
+            // الفهرس يُعيد رقم الصفحة المختارة (أو null إن أُلغي دون اختيار)
+            // بدل فتح شاشة قراءة من داخل نفسه؛ من هنا (الشاشة الرئيسية) نحن
+            // من يقرر فتح شاشة القراءة بالصفحة المُعادة.
+            onPressed: () async {
+              final page = await Navigator.push<int>(
+                context,
+                MaterialPageRoute(builder: (_) => const IndexScreen()),
+              );
+              if (page != null && context.mounted) {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => MushafPageScreen(initialPage: page)),
+                );
+              }
+            },
           ),
           IconButton(
             tooltip: 'بحث في كل القرآن',
@@ -94,7 +105,7 @@ class _HomeScreenState extends State<HomeScreen> {
                 prefixIcon: const Icon(Icons.search),
                 filled: true,
                 border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(14),
+                  borderRadius: BorderRadius.circular(18),
                   borderSide: BorderSide(color: AppColors.gold.withOpacity(0.4)),
                 ),
               ),
@@ -144,7 +155,9 @@ class _HomeScreenState extends State<HomeScreen> {
                         await Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (_) => MushafPageScreen(initialPage: surah.firstPage),
+                            builder: (_) => MushafPageScreen(
+                              initialPage: surah.firstPage,
+                            ),
                           ),
                         );
                         _loadLastRead();
@@ -182,7 +195,7 @@ class _HomeScreenState extends State<HomeScreen> {
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 6),
       child: InkWell(
-        borderRadius: BorderRadius.circular(14),
+        borderRadius: BorderRadius.circular(18),
         onTap: () async {
           final page = await _service.getAyahPage(last.suraNo, last.ayaNo);
           if (!mounted) return;
@@ -197,7 +210,7 @@ class _HomeScreenState extends State<HomeScreen> {
         child: Container(
           padding: const EdgeInsets.all(14),
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(14),
+            borderRadius: BorderRadius.circular(18),
             border: Border.all(color: AppColors.gold.withOpacity(0.5)),
             color: AppColors.gold.withOpacity(0.08),
           ),

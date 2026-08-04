@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 
 /// ألوان هوية التطبيق: أخضر داكن + ذهبي، مستوحاة من زخرفة المصاحف التقليدية.
 class AppColors {
@@ -23,18 +24,6 @@ class MushafDarkColors {
   static const shadow = Color(0x66000000);
 }
 
-/// باقة ألوان اختيارية لـ"الإطار الفاخر" فقط — مستوحاة من لون الزخرفة
-/// الفعلي داخل صفحتي الفاتحة وأول البقرة نفسيهما (المربع الأخضر الفاتح
-/// خلف النص)، لمن يفضّل انسجامًا بصريًا مع الصفحة بدل الذهبي الكلاسيكي.
-/// لا تُستخدم في أي مكان آخر بالتطبيق ولا تؤثر على صورة المصحف نفسها.
-class MushafFrameHarmonyColors {
-  static const background = Color(0xFFF8F4E8);
-  static const primaryGreen = Color(0xFF9FB78D);
-  static const darkGreen = Color(0xFF6E8B63);
-  static const gold = Color(0xFFC8A55A);
-  static const outline = Color(0xFF5A6A4C);
-}
-
 class AppTheme {
   static ThemeData get light => ThemeData(
         useMaterial3: true,
@@ -52,7 +41,16 @@ class AppTheme {
           centerTitle: true,
           elevation: 0,
         ),
-        fontFamily: 'HafsSmart',
+        // خط "Cairo" لواجهة التطبيق (الأزرار، القوائم، النصوص العامة)، مختلف
+        // عن خط النص القرآني نفسه (UthmanicHafs) الذي يُستخدم صراحةً في
+        // عناصر عرض الآيات فقط (التفسير، نتائج البحث، معاينة القارئ).
+        fontFamily: GoogleFonts.cairo().fontFamily,
+        textSelectionTheme: const TextSelectionThemeData(
+          // لون التحديد/التمييز الموحّد في كل التطبيق: ذهبي بدل الأخضر الداكن.
+          selectionColor: Color(0x55C4A03C),
+          selectionHandleColor: AppColors.gold,
+          cursorColor: AppColors.gold,
+        ),
         dividerColor: AppColors.gold.withOpacity(0.35),
       );
 
@@ -73,7 +71,12 @@ class AppTheme {
           centerTitle: true,
           elevation: 0,
         ),
-        fontFamily: 'HafsSmart',
+        fontFamily: GoogleFonts.cairo().fontFamily,
+        textSelectionTheme: const TextSelectionThemeData(
+          selectionColor: Color(0x55C4A03C),
+          selectionHandleColor: AppColors.gold,
+          cursorColor: AppColors.gold,
+        ),
         dividerColor: AppColors.gold.withOpacity(0.25),
       );
 }

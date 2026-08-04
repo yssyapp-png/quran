@@ -45,7 +45,7 @@ class _SearchScreenState extends State<SearchScreen> {
   /// نمط نص الآية في نتائج البحث حسب مستوى السماكة المختار من الإعدادات
   /// (عادي/عريض/عريض جدًا) — نفس المعايير المعتمدة في نافذة التفسير.
   TextStyle _ayahResultStyle(QuranFontBoldness b) => TextStyle(
-        fontFamily: 'HafsSmart',
+        fontFamily: 'UthmanicHafs',
         fontWeight: b.fontWeight,
         color: Colors.black,
         fontSize: 19,

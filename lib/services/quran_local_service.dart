@@ -38,6 +38,7 @@ class QuranLocalService {
         nameEn: first.suraNameEn,
         ayahCount: e.value.length,
         firstPage: first.page,
+        isMeccan: !kMedinanSurahNumbers.contains(e.key),
       );
     }).toList()
       ..sort((a, b) => a.number.compareTo(b.number));

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import '../models/reciter.dart';
 import '../services/settings_service.dart';
 import '../theme/app_theme.dart';
-import '../theme/mushaf_frame_controller.dart';
 import '../theme/quran_font_controller.dart';
 import '../theme/theme_controller.dart';
 
@@ -57,71 +56,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           // (أُزيلت خيارات "حجم صفحة المصحف" المتعددة بناءً على ملاحظة
           // المستخدم: الحجم العادي هو الأنسب والأكثر تطابقًا مع تصميم
-          // الصفحة الرسمية؛ الأحجام الإضافية كانت تبدو غير متناسقة معها.)
-          const Padding(
-            padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text('العرض الفاخر', style: TextStyle(fontWeight: FontWeight.w600)),
-          ),
-          const Padding(
-            padding: EdgeInsets.symmetric(horizontal: 16),
-            child: Text(
-              'إطار ذهبي زخرفي يظهر فقط في صفحتي الفاتحة وأول البقرة '
-              '(صفحتا الافتتاح)، يملأ الهامش الأبيض حولهما بشكل أنيق، دون '
-              'أي تعديل على صورة الصفحة الرسمية نفسها.',
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ),
-          ValueListenableBuilder<bool>(
-            valueListenable: mushafFrameController,
-            builder: (context, enabled, _) => Column(
-              children: [
-                SwitchListTile(
-                  title: const Text('الإطار الفاخر للصفحة'),
-                  secondary: const Icon(Icons.auto_awesome_outlined, color: AppColors.gold),
-                  value: enabled,
-                  activeColor: AppColors.inkGreen,
-                  onChanged: (v) => mushafFrameController.setEnabled(v),
-                ),
-                // لون الإطار نفسه خيار ذوقي مستقل، يظهر فقط عند تفعيل
-                // الإطار الفاخر أعلاه — لا علاقة له بصورة المصحف نفسها.
-                if (enabled)
-                  Padding(
-                    padding: const EdgeInsets.fromLTRB(16, 0, 16, 8),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text('لون الإطار', style: TextStyle(fontWeight: FontWeight.w600)),
-                        const Padding(
-                          padding: EdgeInsets.symmetric(vertical: 4),
-                          child: Text(
-                            'الأخضر المتناسق مستوحى من لون الزخرفة داخل صفحتي '
-                            'الافتتاح نفسيهما.',
-                            style: TextStyle(color: Colors.grey, fontSize: 12),
-                          ),
-                        ),
-                        ValueListenableBuilder<MushafFrameColorScheme>(
-                          valueListenable: mushafFrameColorController,
-                          builder: (context, scheme, _) => Column(
-                            children: MushafFrameColorScheme.values
-                                .map((s) => RadioListTile<MushafFrameColorScheme>(
-                                      title: Text(s.labelAr),
-                                      value: s,
-                                      groupValue: scheme,
-                                      activeColor: AppColors.inkGreen,
-                                      contentPadding: EdgeInsets.zero,
-                                      onChanged: (v) {
-                                        if (v != null) mushafFrameColorController.setScheme(v);
-                                      },
-                                    ))
-                                .toList(),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-              ],
-            ),
-          ),
+          // الصفحة الرسمية؛ الأحجام الإضافية كانت تبدو غير متناسقة معها.
+          // كذلك أُزيل خيار "الإطار الفاخر" لصفحتي الفاتحة وأول البقرة بناءً
+          // على طلب المستخدم — تُعرض الآن كل الصفحات بدون أي إطار زخرفي.)
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Text('سماكة خط القرآن (التفسير والبحث)',
@@ -130,8 +67,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
             child: Text(
-              'يتحكم فقط بوضوح النص الحيّ في التفسير ونتائج البحث؛ صور صفحات '
-              'المصحف الرسمية نفسها لا تتأثر بهذا الخيار.',
+              'يتحكم فقط بوضوح النص الحيّ في التفسير ونتائج البحث; صور صفحات '
+              'المصحج الرسمية نفسها لا تتأثر بهذا الخيار.',
               style: TextStyle(color: Colors.grey, fontSize: 12),
             ),
           ),
@@ -143,14 +80,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
                         title: Text(
                           level.labelAr,
                           style: TextStyle(
-                            fontFamily: 'HafsSmart',
+                            fontFamily: 'UthmanicHafs',
                             fontWeight: level.fontWeight,
                             fontSize: 18,
                           ),
                         ),
                         value: level,
                         groupValue: current,
-                        activeColor: AppColors.inkGreen,
+                        activeColor: AppColors.gold,
                         onChanged: (v) {
                           if (v != null) quranFontController.setLevel(v);
                         },
@@ -173,7 +110,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: Text(r.nameAr),
                   value: r.id,
                   groupValue: _selected!.id,
-                  activeColor: AppColors.inkGreen,
+                  activeColor: AppColors.gold,
                   onChanged: (_) async {
                     await _settingsService.setSelectedReciter(r);
                     if (mounted) setState(() => _selected = r);

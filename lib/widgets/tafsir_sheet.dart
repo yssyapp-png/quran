@@ -6,7 +6,7 @@ import '../theme/quran_font_controller.dart';
 import 'extra_bold_arabic_text.dart';
 
 /// نافذة سفلية تعرض تفسير الآية عند الضغط عليها.
-/// التفسير وحده يُجلب من الإنترنت (نص المصحف وصوره محليان دائمًا)، لذا
+/// التفسير وحده يُجلب من الإنترنت (نص المصحف وصوره محليان دائمًث)، لذا
 /// نعالج هنا بوضوح حالتي: لا يوجد إنترنت، وخطأ من الخادم — مع زر
 /// "إعادة المحاولة" بدل ترك المستخدم أمام رسالة عامة لا يفعل بها شيئًا.
 Future<void> showTafsirSheet(
@@ -71,6 +71,10 @@ class _TafsirBodyState extends State<_TafsirBody> {
 
   @override
   Widget build(BuildContext context) {
+    // لون نص الآية والتفسير كان مثبّتًا على الأسود دائمًا حتى في الوضع
+    // الليلي، فيصبح غير مقروء فوق خلفية النافذة الداكنة. الآن يتبع
+    // السطوع الحالي: أبيض/رمادي فاتح في الليلي، أسود/رمادي داكن في النهاري.
+    final isDark = Theme.of(context).brightness == Brightness.dark;
     return SingleChildScrollView(
       controller: widget.scrollController,
       padding: const EdgeInsets.all(20),
@@ -97,9 +101,9 @@ class _TafsirBodyState extends State<_TafsirBody> {
               strokeWidth: boldness.strokeWidth,
               style: TextStyle(
                 fontSize: 25,
-                fontFamily: 'HafsSmart',
+                fontFamily: 'UthmanicHafs',
                 fontWeight: boldness.fontWeight,
-                color: Colors.black,
+                color: isDark ? Colors.white : Colors.black,
                 height: 1.95,
                 letterSpacing: 0,
               ),
@@ -150,10 +154,10 @@ class _TafsirBodyState extends State<_TafsirBody> {
                   strokeWidth: boldness.strokeWidth,
                   style: TextStyle(
                     fontSize: 16,
-                    fontFamily: 'HafsSmart',
+                    fontFamily: 'UthmanicHafs',
                     fontWeight: boldness.fontWeight,
                     height: 1.7,
-                    color: Colors.black87,
+                    color: isDark ? Colors.white70 : Colors.black87,
                   ),
                 ),
               );
