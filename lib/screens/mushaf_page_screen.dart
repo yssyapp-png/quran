@@ -49,17 +49,12 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
       _zoomControllers.putIfAbsent(page, () => TransformationController());
   late int _currentPage;
   bool _immersive = false;
-  // نعرض صورة الصفحة بـ BoxFit.contain داخل SizedBox.expand (أنظر build())،
-  // فتُحسب نسبة التكبير المطلوبة لملء أكبر مساحة ممكنة من الشاشة تلقائيًا
-  // وبدقة رياضية بحتة اعتمادًا على أبعاد شاشة الجهاز الفعلية — مع إبقاء
-  // الصفحة كاملة ظاهرة بدون أي اقتصاص لأطرافها (بخلاف BoxFit.cover الذي
-  // يقتطع الأطراف)، وبدون أي انحراف يمين/يسار على أي حجم شاشة.
-  // صفحتا الفاتحة وأول البقرة (1 و2) بحاجة لحجم أكبر من بقية الصفحات
-  // بمقدار درجة ونصف من درجة التكبير اليدوي (كل درجة = 0.5×، بنفس مقدار
-  // أزرار التكبير) بناءً على طلب المستخدم، فتُعرضان أكبر من الباقي افتراضيًا.
-  // صُغِّرت باقي صفحات المصحف ربع درجة أخرى (0.0625) من 1.3125 إلى 1.25،
-  // مع إبقاء صفحتي الفاتحة وأول البقرة عند 1.75 دون تغيير.
-  double _baseZoomFor(int page) => (page == 1 || page == 2) ? 1.75 : 1.25;
+  // نتبع طريقة عرض Quran-y نفسها: الصفحتان 1 و2 بعرض الشاشة، وبقية صفحات
+  // المصحف تملأ مساحة القراءة. لا نضيف تكبيرًا ابتدائيًا حتى لا تنحرف الصفحة
+  // أو تتضاعف الملاءمة، مع الإبقاء على التكبير اليدوي عند الحاجة.
+  // نفس منطق Quran-y: لا نضيف تكبيرًا ابتدائيًا فوق طريقة ملاءمة الصورة؛
+  // الصفحتان الافتتاحيتان تعرضان بعرض الشاشة، وبقية الصفحات تملأ المساحة.
+  double _baseZoomFor(int _) => 1.0;
   double get _baseZoom => _baseZoomFor(_currentPage);
   double _zoomScale = 1.0;
   // يسمح للمستخدم بتكبير الصفحة يدويًا (بالقرص بإصبعين أو بالأزرار) فوق
@@ -111,20 +106,19 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
   /// على أي صفحة أخرى محمّلة بجانبها.
   void _setZoom(double newScale) {
     final clamped = newScale.clamp(_minZoom, _maxZoom);
-    final size = MediaQuery.of(context).size;
-    final dx = size.width / 2 * (1 - clamped);
-    final dy = size.height / 2 * (1 - clamped);
-    _controllerFor(_currentPage).value = Matrix4.identity()
-      ..translate(dx, dy)
-      ..scale(clamped);
+    // InteractiveViewer مضبوط أدناه على Alignment.center؛ لذلك يجب أن تحتوي
+    // المصفوفة على التكبير فقط. الحساب السابق كان يضيف إزاحة اعتمادًا على
+    // أبعاد الشاشة كاملة، مع أن مساحة الصفحة أصغر بسبب SafeArea والحواشي،
+    // فكانت بعض الصفحات تنحرف بعد الانتقال أو إعادة التكبير.
+    _controllerFor(_currentPage).value =
+        Matrix4.diagonal3Values(clamped, clamped, 1);
     setState(() => _zoomScale = clamped);
   }
 
   void _zoomIn() => _setZoom(_zoomScale + 0.5);
   void _zoomOut() => _setZoom(_zoomScale - 0.5);
 
-  /// يرجع للتكبير الأساسي (وليس 1.0) حتى تبقى الصفحة مملوءة ومتوازنة
-  /// مع الشاشة دون الهامش الأبيض الزائد حول إطار المصحف.
+  /// يرجع إلى مقياس Quran-y الأساسي دون تكبير إضافي.
   void _resetZoom() {
     if (mounted) {
       setState(() => _zoomScale = _baseZoom);
@@ -167,7 +161,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
   Future<void> _refreshBookmarkState() async {
     final ayah = _referenceAyah;
     if (ayah == null) return;
-    final bookmarked = await _bookmarkService.isBookmarked(ayah.suraNo, ayah.ayaNo);
+    final bookmarked =
+        await _bookmarkService.isBookmarked(ayah.suraNo, ayah.ayaNo);
     if (mounted) setState(() => _isBookmarked = bookmarked);
   }
 
@@ -175,7 +170,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
     final ayah = _referenceAyah;
     if (ayah == null) return;
     await _bookmarkService.toggleBookmark(
-      Bookmark(suraNo: ayah.suraNo, suraName: ayah.suraNameAr, ayaNo: ayah.ayaNo),
+      Bookmark(
+          suraNo: ayah.suraNo, suraName: ayah.suraNameAr, ayaNo: ayah.ayaNo),
     );
     _refreshBookmarkState();
   }
@@ -243,7 +239,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
       setState(() => _isPlaying = true);
     } else {
       // أول ضغط: نبدأ من أول آية موجودة في الصفحة المعروضة حاليًا.
-      final startIndex = _currentSurahAyahs.indexWhere((a) => a.page == _currentPage);
+      final startIndex =
+          _currentSurahAyahs.indexWhere((a) => a.page == _currentPage);
       _playIndex(startIndex == -1 ? 0 : startIndex);
     }
   }
@@ -293,7 +290,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         backgroundColor: AppColors.inkGreen,
-        title: const Text('الانتقال إلى صفحة', style: TextStyle(color: AppColors.gold)),
+        title: const Text('الانتقال إلى صفحة',
+            style: TextStyle(color: AppColors.gold)),
         content: TextField(
           controller: fieldController,
           autofocus: true,
@@ -302,8 +300,10 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
           decoration: const InputDecoration(
             hintText: '1 - 604',
             hintStyle: TextStyle(color: AppColors.cream),
-            enabledBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.gold)),
-            focusedBorder: UnderlineInputBorder(borderSide: BorderSide(color: AppColors.gold)),
+            enabledBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.gold)),
+            focusedBorder: UnderlineInputBorder(
+                borderSide: BorderSide(color: AppColors.gold)),
           ),
           onSubmitted: (v) => Navigator.pop(dialogContext, int.tryParse(v)),
         ),
@@ -313,8 +313,10 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
             child: const Text('إلغاء'),
           ),
           TextButton(
-            onPressed: () => Navigator.pop(dialogContext, int.tryParse(fieldController.text)),
-            child: const Text('انتقال', style: TextStyle(color: AppColors.gold)),
+            onPressed: () => Navigator.pop(
+                dialogContext, int.tryParse(fieldController.text)),
+            child:
+                const Text('انتقال', style: TextStyle(color: AppColors.gold)),
           ),
         ],
       ),
@@ -335,17 +337,23 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
         child: Wrap(
           children: [
             ListTile(
-              leading: const Icon(Icons.menu_book_outlined, color: AppColors.gold),
-              title: const Text('تفسير الآية الحالية', style: TextStyle(color: AppColors.cream)),
+              leading:
+                  const Icon(Icons.menu_book_outlined, color: AppColors.gold),
+              title: const Text('تفسير الآية الحالية',
+                  style: TextStyle(color: AppColors.cream)),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _openTafsir();
               },
             ),
             ListTile(
-              leading: Icon(_isBookmarked ? Icons.bookmark : Icons.bookmark_border,
+              leading: Icon(
+                  _isBookmarked ? Icons.bookmark : Icons.bookmark_border,
                   color: AppColors.gold),
-              title: Text(_isBookmarked ? 'إزالة العلامة المرجعية' : 'إضافة علامة مرجعية',
+              title: Text(
+                  _isBookmarked
+                      ? 'إزالة العلامة المرجعية'
+                      : 'إضافة علامة مرجعية',
                   style: const TextStyle(color: AppColors.cream)),
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -354,7 +362,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.copy_outlined, color: AppColors.gold),
-              title: const Text('نسخ نص الآية', style: TextStyle(color: AppColors.cream)),
+              title: const Text('نسخ نص الآية',
+                  style: TextStyle(color: AppColors.cream)),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _copyAyahText();
@@ -362,7 +371,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.dialpad, color: AppColors.gold),
-              title: const Text('الانتقال إلى صفحة', style: TextStyle(color: AppColors.cream)),
+              title: const Text('الانتقال إلى صفحة',
+                  style: TextStyle(color: AppColors.cream)),
               onTap: () {
                 Navigator.pop(sheetContext);
                 _showGoToPageDialog();
@@ -370,7 +380,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.zoom_in, color: AppColors.gold),
-              title: const Text('تكبير الصفحة', style: TextStyle(color: AppColors.cream)),
+              title: const Text('تكبير الصفحة',
+                  style: TextStyle(color: AppColors.cream)),
               enabled: _zoomScale < _maxZoom,
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -379,7 +390,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
             ),
             ListTile(
               leading: const Icon(Icons.zoom_out, color: AppColors.gold),
-              title: const Text('تصغير الصفحة', style: TextStyle(color: AppColors.cream)),
+              title: const Text('تصغير الصفحة',
+                  style: TextStyle(color: AppColors.cream)),
               enabled: _zoomScale > _minZoom,
               onTap: () {
                 Navigator.pop(sheetContext);
@@ -399,7 +411,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
     // الإعدادات لم يكن ينعكس على شاشة قراءة المصحف إطلاقًا.
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return Scaffold(
-      backgroundColor: isDark ? MushafDarkColors.background : AppColors.creamPage,
+      backgroundColor:
+          isDark ? MushafDarkColors.background : AppColors.creamPage,
       extendBodyBehindAppBar: true,
       body: Stack(
         children: [
@@ -414,100 +427,84 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
               onPageChanged: _onPageChanged,
               itemBuilder: (context, index) {
                 final pageNumber = kMushafPageCount - index;
-                // نُخفي أي صفحة مجاورة فور بدء الانزلاق الفعلي عنها (بدل تركها
-                // تظهر متتابعة نصفين أثناء السحب)، فيبدو التنقل انتقالًا مباشرًا
-                // من صفحة كاملة لأخرى كاملة، دون منظر "صفحتين مقسومتين" أثناء
-                // تحريك الإصبع. لا نغيّر آلية السحب/اتجاهه نفسها إطلاقًا — فقط
-                // نُخفي العرض المرئي للصفحة غير المستقرة على الشاشة حاليًا.
-                return AnimatedBuilder(
-                  animation: _controller,
-                  builder: (context, child) {
-                    var isSettledHere = index == (_controller.hasClients
-                        ? (_controller.page?.round() ??
-                            _controller.initialPage)
-                        : _controller.initialPage);
-                    if (_controller.hasClients && _controller.page != null) {
-                      final distance = (_controller.page! - index).abs();
-                      isSettledHere = distance < 0.02;
-                    }
-                    return Visibility(
-                      visible: isSettledHere,
-                      maintainState: true,
-                      maintainAnimation: true,
-                      maintainSize: true,
-                      child: child!,
-                    );
-                  },
-                  child: GestureDetector(
+                return GestureDetector(
                   onTap: _toggleImmersive,
                   child: Padding(
                     // هامش علوي بسيط فقط حتى لا يلامس رأس الصفحة الحافة
                     // المستديرة (النوتش)، مع رفع الصفحة للأعلى قدر الإمكان
                     // (بدل توسيطها رأسيًا) لتقليل الفراغ السفلي الفارغ.
                     padding: const EdgeInsets.only(top: 8, bottom: 4),
-                    child: LayoutBuilder(
-                      builder: (context, constraints) {
-                        return InteractiveViewer(
-                          // متحكم مستقل خاص بهذه الصفحة تحديدًا (pageNumber)، حتى
-                          // لا يتأثر تكبير/تحريك أي صفحة بأختها المجاورة المحمّلة
-                          // بجانبها في PageView (أنظر تعليق _zoomControllers أعلاه).
-                          transformationController: _controllerFor(pageNumber),
-                          minScale: _minZoom,
-                          maxScale: _maxZoom,
-                          // نعطّل السحب بإصبع واحد لأنه كان يتعارض مع سحب
-                          // التنقل بين الصفحات (PageView) ويسبب خللًا أثناء
-                          // التصفح. القرص بإصبعين (Pinch) للتكبير ما زال يعمل
-                          // بشكل طبيعي، بالإضافة لأزرار التكبير/التصغير.
-                          panEnabled: false,
-                          scaleEnabled: true,
-                          onInteractionEnd: (_) {
-                            final s = _controllerFor(pageNumber).value.getMaxScaleOnAxis();
-                            if (mounted && pageNumber == _currentPage) {
-                              setState(() => _zoomScale = s);
-                            }
-                          },
-                          boundaryMargin: const EdgeInsets.symmetric(horizontal: 200),
-                          child: Align(
-                            // نرفع باقي صفحات المصحف درجة بسيطة للأعلى (مع تقليل
-                            // التوسيط الرأسي درجة بسيطة أيضًا) لتقليل الفراغ السفلي
-                            // الفارغ، مع إبقاء صفحتي الفاتحة وأول البقرة بتوسيطهما
-                            // الرأسي الكامل الأصلي دون أي تغيير كما طلب المستخدم.
-                            alignment: (pageNumber == 1 || pageNumber == 2)
-                                ? Alignment.center
-                                : const Alignment(0, -0.1),
-                            // BoxFit.contain مع SizedBox.expand أدناه يكبّر الصفحة
-                            // تلقائيًا لأقصى حجم ممكن يملأ الشاشة دون قص أي جزء منها،
-                            // مع الحفاظ على تناسبها الأصلي (بدون تمديد/تشويه)، وتوسيط
-                            // تام عبر Align + مصفوفة تحويل بحالة الهوية عند الراحة —
-                            // فلا يحدث أي انحراف نحو اليمين أو اليسار على أي شاشة.
-                            child: SizedBox.expand(
-                              // بدل الانعكاس اللحظي (ColorFilter) الذي كان يشوّه ألوان
-                              // الصفحات المزخرفة، نستخدم الآن صورًا ليلية مُولَّدة مسبقًا
-                              // لكل صفحات المصحف الـ604 (ملف "$pageNumber_dark.jpg" لكل
-                              // صفحة)، فتظهر بجودة وألوان مضبوطة بدقة في الوضع الليلي دون
-                              // أي تأثير جانبي، وتعود صورة النهار الأصلية فورًا عند إيقاف
-                              // الوضع الليلي دون فقد أي تفاصيل من الصورة الرسمية المخزّنة.
-                              child: Image.asset(
-                                isDark
-                                    ? 'assets/mushaf_pages/${pageNumber}_dark.jpg'
-                                    : 'assets/mushaf_pages/$pageNumber.jpg',
-                                fit: BoxFit.contain,
-                                // جودة عرض عالية لضمان وضوح رسم الآيات بدون تشويش
-                                // عند التكبير، وتفادي وميض إعادة التحميل بين الصفحات.
-                                filterQuality: FilterQuality.high,
-                                isAntiAlias: true,
-                                gaplessPlayback: true,
-                                errorBuilder: (context, error, stack) => const Center(
-                                  child: Text('تعذر تحميل الصفحة',
-                                      style: TextStyle(color: AppColors.inkGreen)),
+                    child: InteractiveViewer(
+                      // متحكم مستقل خاص بهذه الصفحة تحديدًا (pageNumber)، حتى
+                      // لا يتأثر تكبير/تحريك أي صفحة بأختها المجاورة المحمّلة
+                      // بجانبها في PageView (أنظر تعليق _zoomControllers أعلاه).
+                      transformationController: _controllerFor(pageNumber),
+                      // يجعل أصل التكبير مركز مساحة الصفحة الفعلية داخل
+                      // SafeArea، وليس الزاوية أو مركز الشاشة الخارجية.
+                      alignment: Alignment.center,
+                      minScale: _minZoom,
+                      maxScale: _maxZoom,
+                      // نعطّل السحب بإصبع واحد لأنه كان يتعارض مع سحب
+                      // التنقل بين الصفحات (PageView) ويسبب خللًا أثناء
+                      // التصفح. القرص بإصبعين (Pinch) للتكبير ما زال يعمل
+                      // بشكل طبيعي، بالإضافة لأزرار التكبير/التصغير.
+                      panEnabled: false,
+                      scaleEnabled: true,
+                      onInteractionEnd: (_) {
+                        final s = _controllerFor(pageNumber)
+                            .value
+                            .getMaxScaleOnAxis();
+                        if (mounted && pageNumber == _currentPage) {
+                          setState(() => _zoomScale = s);
+                        }
+                      },
+                      boundaryMargin:
+                          const EdgeInsets.symmetric(horizontal: 200),
+                      clipBehavior: Clip.hardEdge,
+                      child: Align(
+                        // توسيط موحّد لكل صفحات المصحف أفقيًا ورأسيًا.
+                        alignment: Alignment.center,
+                        // SizedBox.expand يوفّر مساحة القراءة نفسها التي يعتمدها
+                        // Quran-y، بينما تحدد BoxFit أدناه طريقة كل نوع صفحة.
+                        child: SizedBox.expand(
+                          // بدل الانعكاس اللحظي (ColorFilter) الذي كان يشوّه ألوان
+                          // الصفحات المزخرفة، نستخدم الآن صورًا ليلية مُولَّدة مسبقًا
+                          // لكل صفحات المصحف الـ604 (ملف "$pageNumber_dark.jpg" لكل
+                          // صفحة)، فتظهر بجودة وألوان مضبوطة بدقة في الوضع الليلي دون
+                          // أي تأثير جانبي، وتعود صورة النهار الأصلية فورًا عند إيقاف
+                          // الوضع الليلي دون فقد أي تفاصيل من الصورة الرسمية المخزّنة.
+                          child: Semantics(
+                            image: true,
+                            label: 'صفحة المصحف $pageNumber',
+                            child: Image.asset(
+                              isDark
+                                  ? 'assets/mushaf_pages/${pageNumber}_dark.jpg'
+                                  : 'assets/mushaf_pages/$pageNumber.jpg',
+                              // مطابق لطريقة عرض Quran-y: الفاتحة وأول البقرة
+                              // بعرض الصفحة، وبقية صفحات المصحف تملأ مساحة
+                              // القراءة بالكامل مع بقائها في مركز الشاشة.
+                              fit: pageNumber <= 2
+                                  ? BoxFit.fitWidth
+                                  : BoxFit.fill,
+                              alignment: Alignment.center,
+                              // جودة عرض عالية لضمان وضوح رسم الآيات بدون تشويش
+                              // عند التكبير، وتفادي وميض إعادة التحميل بين الصفحات.
+                              filterQuality: FilterQuality.high,
+                              isAntiAlias: true,
+                              gaplessPlayback: true,
+                              excludeFromSemantics: true,
+                              errorBuilder: (context, error, stack) =>
+                                  const Center(
+                                child: Text(
+                                  'تعذر تحميل الصفحة',
+                                  style: TextStyle(color: AppColors.inkGreen),
                                 ),
                               ),
                             ),
                           ),
-                        );
-                      },
+                        ),
+                      ),
                     ),
-                  ),
                   ),
                 );
               },
@@ -517,13 +514,15 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
             top: 0,
             left: 0,
             right: 0,
-            child: _buildAnimatedBar(alignTop: true, child: _buildTopBar(context)),
+            child:
+                _buildAnimatedBar(alignTop: true, child: _buildTopBar(context)),
           ),
           Positioned(
             left: 0,
             right: 0,
             bottom: 0,
-            child: _buildAnimatedBar(alignTop: false, child: _buildPlayerBar(context)),
+            child: _buildAnimatedBar(
+                alignTop: false, child: _buildPlayerBar(context)),
           ),
         ],
       ),
@@ -564,7 +563,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Icon(icon, color: active ? AppColors.goldLight : AppColors.gold, size: 22),
+            Icon(icon,
+                color: active ? AppColors.goldLight : AppColors.gold, size: 22),
             const SizedBox(height: 2),
             Text(
               label,
@@ -589,11 +589,13 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 8),
         decoration: BoxDecoration(
-          color: isDark ? MushafDarkColors.overlay : AppColors.inkGreen.withOpacity(0.92),
+          color: isDark
+              ? MushafDarkColors.overlay
+              : AppColors.inkGreen.withOpacity(0.92),
         ),
         child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: [
+          mainAxisAlignment: MainAxisAlignment.spaceAround,
+          children: [
             _topBarAction(
               label: 'الفهرس',
               icon: Icons.list_alt_outlined,
@@ -636,7 +638,9 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
               valueListenable: themeController,
               builder: (context, mode, _) => _topBarAction(
                 label: mode == ThemeMode.dark ? 'نهاري' : 'ليلي',
-                icon: mode == ThemeMode.dark ? Icons.light_mode_outlined : Icons.dark_mode_outlined,
+                icon: mode == ThemeMode.dark
+                    ? Icons.light_mode_outlined
+                    : Icons.dark_mode_outlined,
                 onPressed: themeController.toggle,
               ),
             ),
@@ -645,8 +649,8 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
               icon: Icons.more_horiz,
               onPressed: _showMoreSheet,
             ),
-              ],
-            ),
+          ],
+        ),
       ),
     );
   }
@@ -654,122 +658,137 @@ class _MushafPageScreenState extends State<MushafPageScreen> {
   Widget _buildPlayerBar(BuildContext context) {
     final isDark = Theme.of(context).brightness == Brightness.dark;
     return SafeArea(
-        top: false,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
-          decoration: BoxDecoration(
-            color: isDark ? MushafDarkColors.overlay : AppColors.inkGreen.withOpacity(0.92),
-            border: Border(
-                top: BorderSide(
-                    color: isDark ? MushafDarkColors.divider : AppColors.gold.withOpacity(0.4))),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              // صف ثانٍ من الأيقونات أسفل صفحة المصحف (الإعدادات/استماع/
-              // ختمة/التنزيلات/تفسير) — منفصل عن أزرار التشغيل الأساسية
-              // وقابل للتمرير الأفقي حتى لا يفيض على الشاشات الضيقة.
-              Padding(
-                padding: const EdgeInsets.only(bottom: 6),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  reverse: true,
-                  child: Row(
-                    children: [
-                      _topBarAction(
-                        label: 'الإعدادات',
-                        icon: Icons.settings_outlined,
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const SettingsScreen()),
-                        ),
-                      ),
-                      _topBarAction(
-                        label: 'استماع',
-                        icon: Icons.headphones_outlined,
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const ListenScreen()),
-                        ),
-                      ),
-                      _topBarAction(
-                        label: 'ختمة',
-                        icon: Icons.task_alt_outlined,
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => KhatmaScreen(currentPage: _currentPage)),
-                        ),
-                      ),
-                      _topBarAction(
-                        label: 'التنزيلات',
-                        icon: Icons.download_outlined,
-                        onPressed: () => Navigator.push(
-                          context,
-                          MaterialPageRoute(builder: (_) => const DownloadsScreen()),
-                        ),
-                      ),
-                      _topBarAction(
-                        label: 'تفسير',
-                        icon: Icons.menu_book_outlined,
-                        onPressed: _openTafsir,
-                      ),
-                    ],
-                  ),
-                ),
-              ),
-              // اسم القارئ الحالي فوق شريط التشغيل مباشرة (كما في تطبيقات
-              // القرآن الاحترافية) — اضغط عليه لاختيار قارئ آخر مستقبلًا.
-              Padding(
-                padding: const EdgeInsets.only(bottom: 2),
+      top: false,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 16),
+        decoration: BoxDecoration(
+          color: isDark
+              ? MushafDarkColors.overlay
+              : AppColors.inkGreen.withOpacity(0.92),
+          border: Border(
+              top: BorderSide(
+                  color: isDark
+                      ? MushafDarkColors.divider
+                      : AppColors.gold.withOpacity(0.4))),
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // صف ثانٍ من الأيقونات أسفل صفحة المصحف (الإعدادات/استماع/
+            // ختمة/التنزيلات/تفسير) — منفصل عن أزرار التشغيل الأساسية
+            // وقابل للتمرير الأفقي حتى لا يفيض على الشاشات الضيقة.
+            Padding(
+              padding: const EdgeInsets.only(bottom: 6),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                reverse: true,
                 child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.mic_none, color: AppColors.gold, size: 14),
-                    const SizedBox(width: 4),
-                    Text(
-                      _reciter.nameAr,
-                      style: const TextStyle(color: AppColors.cream, fontSize: 12),
+                    _topBarAction(
+                      label: 'الإعدادات',
+                      icon: Icons.settings_outlined,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const SettingsScreen()),
+                      ),
+                    ),
+                    _topBarAction(
+                      label: 'استماع',
+                      icon: Icons.headphones_outlined,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (_) => const ListenScreen()),
+                      ),
+                    ),
+                    _topBarAction(
+                      label: 'ختمة',
+                      icon: Icons.task_alt_outlined,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) =>
+                                KhatmaScreen(currentPage: _currentPage)),
+                      ),
+                    ),
+                    _topBarAction(
+                      label: 'التنزيلات',
+                      icon: Icons.download_outlined,
+                      onPressed: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                            builder: (_) => const DownloadsScreen()),
+                      ),
+                    ),
+                    _topBarAction(
+                      label: 'تفسير',
+                      icon: Icons.menu_book_outlined,
+                      onPressed: _openTafsir,
                     ),
                   ],
                 ),
               ),
-              Row(
+            ),
+            // اسم القارئ الحالي فوق شريط التشغيل مباشرة (كما في تطبيقات
+            // القرآن الاحترافية) — اضغط عليه لاختيار قارئ آخر مستقبلًا.
+            Padding(
+              padding: const EdgeInsets.only(bottom: 2),
+              child: Row(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  IconButton(
-                    tooltip: 'إيقاف',
-                    icon: const Icon(Icons.stop_circle_outlined, color: AppColors.gold),
-                    onPressed: _stop,
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.skip_previous, color: AppColors.gold, size: 30),
-                    onPressed: _previous,
-                  ),
-                  const SizedBox(width: 8),
-                  Container(
-                    decoration: const BoxDecoration(shape: BoxShape.circle, color: AppColors.gold),
-                    child: IconButton(
-                      icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
-                          color: AppColors.darkGreenBg, size: 32),
-                      onPressed: _togglePlayPause,
-                    ),
-                  ),
-                  const SizedBox(width: 8),
-                  IconButton(
-                    icon: const Icon(Icons.skip_next, color: AppColors.gold, size: 30),
-                    onPressed: _next,
-                  ),
-                  IconButton(
-                    tooltip: 'تكرار الآية',
-                    icon: Icon(Icons.repeat_one,
-                        color: _repeatOne ? AppColors.gold : AppColors.gold.withOpacity(0.4)),
-                    onPressed: () => setState(() => _repeatOne = !_repeatOne),
+                  const Icon(Icons.mic_none, color: AppColors.gold, size: 14),
+                  const SizedBox(width: 4),
+                  Text(
+                    _reciter.nameAr,
+                    style:
+                        const TextStyle(color: AppColors.cream, fontSize: 12),
                   ),
                 ],
               ),
-            ],
-          ),
+            ),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                IconButton(
+                  tooltip: 'إيقاف',
+                  icon: const Icon(Icons.stop_circle_outlined,
+                      color: AppColors.gold),
+                  onPressed: _stop,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.skip_previous,
+                      color: AppColors.gold, size: 30),
+                  onPressed: _previous,
+                ),
+                const SizedBox(width: 8),
+                Container(
+                  decoration: const BoxDecoration(
+                      shape: BoxShape.circle, color: AppColors.gold),
+                  child: IconButton(
+                    icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow,
+                        color: AppColors.darkGreenBg, size: 32),
+                    onPressed: _togglePlayPause,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  icon: const Icon(Icons.skip_next,
+                      color: AppColors.gold, size: 30),
+                  onPressed: _next,
+                ),
+                IconButton(
+                  tooltip: 'تكرار الآية',
+                  icon: Icon(Icons.repeat_one,
+                      color: _repeatOne
+                          ? AppColors.gold
+                          : AppColors.gold.withOpacity(0.4)),
+                  onPressed: () => setState(() => _repeatOne = !_repeatOne),
+                ),
+              ],
+            ),
+          ],
         ),
+      ),
     );
   }
 }
