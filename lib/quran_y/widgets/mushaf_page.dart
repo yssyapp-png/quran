@@ -172,9 +172,10 @@ class _CroppedMushafImageState extends State<_CroppedMushafImage> {
             ? _openingWidthFraction
             : _pageWidthFraction,
         sourceHeightFraction: isOpeningSpread ? _openingHeightFraction : 1,
-        // الصفحتان الافتتاحيتان لهما تصميم دائري خاص؛ لذلك تُعرضان
-        // بنسبة الصورة الأصلية بلا أي ضغط أو تمديد رأسي.
-        verticalDisplayScale: isOpeningSpread ? 1 : 1.18,
+        // الفاتحة وأول البقرة لهما تصميم دائري خاص. نثبت لهما نسبة
+        // أبعاد القص الأصلية، بينما يبقى تحسين الامتلاء لبقية الصفحات فقط.
+        preserveAspectRatio: isOpeningSpread,
+        verticalDisplayScale: 1.18,
       ),
     );
   }
@@ -187,6 +188,7 @@ class _CroppedMushafPainter extends CustomPainter {
     required this.sourceTopFraction,
     required this.sourceWidthFraction,
     required this.sourceHeightFraction,
+    required this.preserveAspectRatio,
     required this.verticalDisplayScale,
   });
 
@@ -195,6 +197,7 @@ class _CroppedMushafPainter extends CustomPainter {
   final double sourceTopFraction;
   final double sourceWidthFraction;
   final double sourceHeightFraction;
+  final bool preserveAspectRatio;
   final double verticalDisplayScale;
 
   @override
@@ -212,11 +215,15 @@ class _CroppedMushafPainter extends CustomPainter {
       fitted.destination,
       Offset.zero & size,
     );
-    final destination = Rect.fromCenter(
-      center: containedDestination.center,
-      width: containedDestination.width,
-      height: containedDestination.height * verticalDisplayScale,
-    );
+    // لا نعدل عرض أو ارتفاع الصفحتين الافتتاحيتين بعد BoxFit.contain.
+    // هذا يحافظ على شكل الدائرة والخط كما هما في ملف الصورة الأصلي.
+    final destination = preserveAspectRatio
+        ? containedDestination
+        : Rect.fromCenter(
+            center: containedDestination.center,
+            width: containedDestination.width,
+            height: containedDestination.height * verticalDisplayScale,
+          );
 
     canvas.drawImageRect(
       image,
@@ -233,6 +240,7 @@ class _CroppedMushafPainter extends CustomPainter {
       oldDelegate.sourceTopFraction != sourceTopFraction ||
       oldDelegate.sourceWidthFraction != sourceWidthFraction ||
       oldDelegate.sourceHeightFraction != sourceHeightFraction ||
+      oldDelegate.preserveAspectRatio != preserveAspectRatio ||
       oldDelegate.verticalDisplayScale != verticalDisplayScale;
 }
 
