@@ -18,6 +18,20 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - name: Block accidental secrets
+        shell: bash
+        run: |
+          # Keep local signing files and build output out of the scan.  The
+          # expression intentionally targets only credential formats that must
+          # never be committed to this application.
+          ! rg -n -i --hidden \
+            --glob '!.git/**' \
+            --glob '!build/**' \
+            --glob '!.dart_tool/**' \
+            --glob '!ios/Pods/**' \
+            --glob '!android/.gradle/**' \
+            --glob '!.github/workflows/quran-quality.yml' \
+            '(BEGIN (RSA|EC|OPENSSH|DSA) PRIVATE KEY|AKIA[0-9A-Z]{16}|sk_(live|test)_[A-Za-z0-9]+|service_role|SUPABASE_(SERVICE|ANON)_KEY|AIza[0-9A-Za-z_-]{35})' .
       - uses: subosito/flutter-action@v2
         with:
           channel: stable
