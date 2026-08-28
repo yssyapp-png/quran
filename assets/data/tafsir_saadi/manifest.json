@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "book_id": 42,
+  "book_name": "تفسير السعدي = تيسير الكريم الرحمن",
+  "source": "https://shamela.ws/book/42",
+  "text_edition": "المكتبة الشاملة الرسمية - كتاب 42",
+  "author": "عبد الرحمن السعدي",
+  "source_type": "shamela_official_web_text",
+  "source_file_sha256": "31dbe9e0c9a2ce36660fe14d61e854ef9dc035051686d6036eb8ad2420b24826",
+  "ayahs_verified": 6236,
+  "mushaf_pages": 604,
+  "tafsir_groups": 1998,
+  "text_groups": 1998,
+  "groups_without_independent_commentary": [],
+  "tafsir_entries": 2083,
+  "offline_ready": true
+}

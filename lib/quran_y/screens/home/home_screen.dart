@@ -190,9 +190,9 @@ class _ReadingCard extends StatelessWidget {
           Text(
             'صفحة $pageNumber',
             style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                  color: Colors.white,
-                  fontWeight: FontWeight.w700,
-                ),
+              color: Colors.white,
+              fontWeight: FontWeight.w700,
+            ),
           ),
           const SizedBox(height: 20),
           FilledButton.tonalIcon(

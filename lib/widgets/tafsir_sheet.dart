@@ -81,8 +81,8 @@ class _TafsirBodyState extends State<_TafsirBody> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: const [
+          const Row(
+            children: [
               Icon(Icons.menu_book, color: AppColors.gold),
               SizedBox(width: 8),
               Text('التفسير',

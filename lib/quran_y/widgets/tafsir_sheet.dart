@@ -84,9 +84,7 @@ class _TafsirSheetState extends State<TafsirSheet> {
                         children: [
                           Text(
                             _source.name,
-                            style: Theme.of(context)
-                                .textTheme
-                                .titleMedium
+                            style: Theme.of(context).textTheme.titleMedium
                                 ?.copyWith(fontWeight: FontWeight.w800),
                           ),
                           Text(
@@ -233,7 +231,7 @@ class _TafsirLoadError extends StatelessWidget {
             const Icon(Icons.cloud_off_rounded, size: 48),
             const SizedBox(height: 12),
             const Text(
-              'تعذر تحميل تفسير السعدي. تحقق من اتصال الإنترنت ثم أعد المحاولة.',
+              'تعذر عرض تفسير السعدي. أعد المحاولة، أو تحقق من الاتصال إذا لم تُنزّل النسخة المحلية.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 14),

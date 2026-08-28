@@ -1,0 +1,6 @@
+# انسخ هذا الملف محليًا إلى android/key.properties ثم ضع بيانات مفتاح الإصدار.
+# android/key.properties وملفات المفاتيح مستثناة من Git ولا تُرفع إلى GitHub.
+storePassword=REPLACE_LOCALLY
+keyPassword=REPLACE_LOCALLY
+keyAlias=upload
+storeFile=/absolute/local/path/to/quran-upload-keystore.jks

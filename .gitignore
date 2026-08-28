@@ -3,6 +3,7 @@
 *.log
 *.pyc
 *.swp
+*.tmp
 .DS_Store
 .atom/
 .build/
@@ -27,7 +28,9 @@ migrate_working_dir/
 **/doc/api/
 **/ios/Flutter/.last_build_id
 .dart_tool/
+.flutter-plugins
 .flutter-plugins-dependencies
+.packages
 .pub-cache/
 .pub/
 /build/
@@ -43,5 +46,25 @@ app.*.map.json
 /android/app/debug
 /android/app/profile
 /android/app/release
+/android/build/
+
+# Local configuration and signing material
+**/.env
+**/.env.*
+!**/.env.example
+**/key.properties
+**/*.jks
+**/*.keystore
+
+# Native generated output
+**/.gradle/
+**/Pods/
+**/DerivedData/
+**/Flutter/ephemeral/
+**/xcuserdata/
+
 _to_delete/
 test_log.txt
+
+# Local extraction backup; the verified tafsir data is in tafsir_saadi/.
+/assets/data/tafsir_saadi.pdf-text-layer-backup/

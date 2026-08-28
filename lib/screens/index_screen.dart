@@ -89,7 +89,7 @@ class _IndexScreenState extends State<IndexScreen> with SingleTickerProviderStat
             final s = surahs[index];
             return ListTile(
               leading: CircleAvatar(
-                backgroundColor: AppColors.gold.withOpacity(0.15),
+                backgroundColor: AppColors.gold.withValues(alpha: 0.15),
                 child: Text('${s.number}', style: const TextStyle(color: AppColors.gold)),
               ),
               title: Text(s.nameAr, textAlign: TextAlign.right),
@@ -126,7 +126,7 @@ class _IndexScreenState extends State<IndexScreen> with SingleTickerProviderStat
             final j = juzList[index];
             return ListTile(
               leading: CircleAvatar(
-                backgroundColor: AppColors.gold.withOpacity(0.15),
+                backgroundColor: AppColors.gold.withValues(alpha: 0.15),
                 child: Text('${j.number}', style: const TextStyle(color: AppColors.gold)),
               ),
               title: Text('الجزء ${j.number}', textAlign: TextAlign.right),

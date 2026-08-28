@@ -45,7 +45,9 @@ flutter_native_splash:
 flutter:
   uses-material-design: true
   assets:
-    - assets/data/
+    # نضمّن ملفات التشغيل فقط، وليس نسخة PDF النصية الاحتياطية المحلية.
+    - assets/data/hafs_smart_v8.json
+    - assets/data/tafsir_saadi/
     - assets/mushaf_pages/
   fonts:
     - family: UthmanicHafs

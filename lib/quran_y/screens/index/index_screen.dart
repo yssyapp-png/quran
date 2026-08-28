@@ -260,9 +260,9 @@ class _RevelationBadge extends StatelessWidget {
             Text(
               surah.revelationLabel,
               style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: badgeColor,
-                    fontWeight: FontWeight.w800,
-                  ),
+                color: badgeColor,
+                fontWeight: FontWeight.w800,
+              ),
             ),
           ],
         ),

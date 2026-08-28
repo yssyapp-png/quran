@@ -86,7 +86,7 @@ class _KhatmaScreenState extends State<KhatmaScreen> {
                       CircularProgressIndicator(
                         value: progress,
                         strokeWidth: 10,
-                        backgroundColor: AppColors.gold.withOpacity(0.15),
+                        backgroundColor: AppColors.gold.withValues(alpha: 0.15),
                         color: AppColors.inkGreen,
                       ),
                       Text('${(progress * 100).toStringAsFixed(1)}%',

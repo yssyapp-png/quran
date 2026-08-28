@@ -15,6 +15,6 @@ void main() {
     await tester.pumpWidget(const QuranApp());
     await tester.pumpAndSettle();
 
-    expect(find.text('تلاوة الصفحة 1'), findsOneWidget);
+    expect(find.text('سعد الغامدي'), findsOneWidget);
   });
 }

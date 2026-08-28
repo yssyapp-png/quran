@@ -47,10 +47,19 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Row(
               children: [
-                Icon(Icons.accessibility_new_outlined, color: AppColors.inkGreen, size: 20),
+                Icon(
+                  Icons.accessibility_new_outlined,
+                  color: AppColors.inkGreen,
+                  size: 20,
+                ),
                 SizedBox(width: 6),
-                Text('إعدادات الوضوح وضعاف البصر',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.inkGreen)),
+                Text(
+                  'إعدادات الوضوح وضعاف البصر',
+                  style: TextStyle(
+                    fontWeight: FontWeight.bold,
+                    color: AppColors.inkGreen,
+                  ),
+                ),
               ],
             ),
           ),
@@ -61,8 +70,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
           // على طلب المستخدم — تُعرض الآن كل الصفحات بدون أي إطار زخرفي.)
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text('سماكة خط القرآن (التفسير والبحث)',
-                style: TextStyle(fontWeight: FontWeight.w600)),
+            child: Text(
+              'سماكة خط القرآن (التفسير والبحث)',
+              style: TextStyle(fontWeight: FontWeight.w600),
+            ),
           ),
           const Padding(
             padding: EdgeInsets.symmetric(horizontal: 16, vertical: 4),
@@ -74,9 +85,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
           ValueListenableBuilder<QuranFontBoldness>(
             valueListenable: quranFontController,
-            builder: (context, current, _) => Column(
-              children: QuranFontBoldness.values
-                  .map((level) => RadioListTile<QuranFontBoldness>(
+            builder: (context, current, _) => RadioGroup<QuranFontBoldness>(
+              groupValue: current,
+              onChanged: (level) {
+                if (level != null) quranFontController.setLevel(level);
+              },
+              child: Column(
+                children: QuranFontBoldness.values
+                    .map(
+                      (level) => RadioListTile<QuranFontBoldness>(
                         title: Text(
                           level.labelAr,
                           style: TextStyle(
@@ -86,44 +103,64 @@ class _SettingsScreenState extends State<SettingsScreen> {
                           ),
                         ),
                         value: level,
-                        groupValue: current,
                         activeColor: AppColors.gold,
-                        onChanged: (v) {
-                          if (v != null) quranFontController.setLevel(v);
-                        },
-                      ))
-                  .toList(),
+                      ),
+                    )
+                    .toList(),
+              ),
             ),
           ),
           const Divider(),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text('القارئ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.inkGreen)),
+            child: Text(
+              'القارئ',
+              style: TextStyle(
+                fontWeight: FontWeight.bold,
+                color: AppColors.inkGreen,
+              ),
+            ),
           ),
           if (_selected == null)
             const Padding(
               padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+              child: Center(
+                child: CircularProgressIndicator(color: AppColors.gold),
+              ),
             )
           else
-            ...Reciters.all.map((r) => RadioListTile<String>(
-                  title: Text(r.nameAr),
-                  value: r.id,
-                  groupValue: _selected!.id,
-                  activeColor: AppColors.gold,
-                  onChanged: (_) async {
-                    await _settingsService.setSelectedReciter(r);
-                    if (mounted) setState(() => _selected = r);
-                  },
-                )),
-          if (Reciters.all.length == 1)
-            const Padding(
-              padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                'سيتم إضافة قراء آخرين لاحقًا.',
-                style: TextStyle(color: Colors.grey, fontSize: 12),
+            RadioGroup<String>(
+              groupValue: _selected!.id,
+              onChanged: (id) async {
+                if (id == null) return;
+                final reciter = Reciters.byId(id);
+                await _settingsService.setSelectedReciter(reciter);
+                if (mounted) setState(() => _selected = reciter);
+              },
+              child: Column(
+                children: Reciters.all
+                    .map(
+                      (r) => RadioListTile<String>(
+                        title: Text(r.nameAr),
+                        subtitle: Text(
+                          r.playsFullSurah
+                              ? 'السورة كاملة · 128kbps'
+                              : 'آية بآية · 128kbps',
+                        ),
+                        value: r.id,
+                        activeColor: AppColors.gold,
+                      ),
+                    )
+                    .toList(),
               ),
             ),
+          const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            child: Text(
+              'تظهر أي تلاوات جديدة هنا تلقائيًا عند إضافتها إلى النظام.',
+              style: TextStyle(color: Colors.grey, fontSize: 12),
+            ),
+          ),
         ],
       ),
     );

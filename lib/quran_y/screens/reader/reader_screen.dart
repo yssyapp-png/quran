@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../../../models/reciter.dart';
+import '../../../services/settings_service.dart';
 import '../../core/constants/app_constants.dart';
 import '../../core/constants/quran_index.dart';
 import '../../core/state/app_state.dart';
@@ -37,6 +39,7 @@ class _ReaderScreenState extends State<ReaderScreen> {
     _currentPage = widget.initialPage.clamp(1, AppConstants.mushafPageCount);
     _pageController = PageController(initialPage: _currentPage - 1);
     _audioService = QuranAudioService(onPageStarted: _followAudioPage);
+    SettingsService().getSelectedReciter().then(_audioService.selectReciter);
     WidgetsBinding.instance.addPostFrameCallback((_) {
       widget.appState.updateLastReadPage(_currentPage);
     });
@@ -392,9 +395,9 @@ class _TopAction extends StatelessWidget {
                     overflow: TextOverflow.fade,
                     softWrap: false,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontSize: 10,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontSize: 10,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),
@@ -477,7 +480,8 @@ class _ReaderSearchSheetState extends State<_ReaderSearchSheet> {
           surah.name.contains(normalized) ||
           surah.number.toString() == normalized;
     }).toList();
-    final validPage = requestedPage != null &&
+    final validPage =
+        requestedPage != null &&
         requestedPage >= 1 &&
         requestedPage <= AppConstants.mushafPageCount;
 
@@ -593,10 +597,21 @@ class _ReaderBottomBar extends StatelessWidget {
                     icon: audioService.isLoading && active
                         ? Icons.hourglass_top_rounded
                         : active && audioService.isPlaying
-                            ? Icons.pause_circle_rounded
-                            : Icons.headphones_rounded,
+                        ? Icons.pause_circle_rounded
+                        : Icons.headphones_rounded,
                     active: active,
                     onTap: () => audioService.togglePage(pageNumber),
+                  ),
+                  _BottomAction(
+                    label: 'القراء',
+                    icon: Icons.record_voice_over_rounded,
+                    onTap: () => _showReciterPicker(context),
+                  ),
+                  _BottomAction(
+                    label: 'آية',
+                    tooltip: 'اختيار آية للتلاوة',
+                    icon: Icons.format_list_numbered_rounded,
+                    onTap: () => _showAyahPicker(context),
                   ),
                   _BottomAction(
                     label: 'ختمة',
@@ -621,6 +636,149 @@ class _ReaderBottomBar extends StatelessWidget {
         },
       ),
     );
+  }
+
+  Future<void> _showReciterPicker(BuildContext context) async {
+    final selected = await showModalBottomSheet<Reciter>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const ListTile(
+              leading: Icon(Icons.record_voice_over_outlined),
+              title: Text('اختيار القارئ'),
+            ),
+            ...Reciters.all.map(
+              (reciter) => ListTile(
+                leading: Icon(
+                  reciter.id == audioService.reciter.id
+                      ? Icons.check_circle_rounded
+                      : Icons.record_voice_over_outlined,
+                ),
+                title: Text(reciter.nameAr),
+                subtitle: Text(
+                  reciter.playsFullSurah
+                      ? 'السورة كاملة · 128kbps'
+                      : 'آيات منفصلة · 128kbps',
+                ),
+                trailing: const Icon(Icons.chevron_left_rounded),
+                onTap: () => Navigator.of(context).pop(reciter),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+        ),
+      ),
+    );
+    if (selected == null) return;
+    await audioService.selectReciter(selected);
+    await SettingsService().setSelectedReciter(selected);
+  }
+
+  Future<void> _showAyahPicker(BuildContext context) async {
+    if (!audioService.supportsAyahSelection) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text(
+            'القارئ المختار يقدّم السورة كاملة؛ اختر عبد الله المطرود للتنقل الدقيق بين الآيات.',
+          ),
+        ),
+      );
+      return;
+    }
+
+    final surah = await showModalBottomSheet<SurahIndexEntry>(
+      context: context,
+      useSafeArea: true,
+      showDragHandle: true,
+      builder: (context) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: SizedBox(
+          height: MediaQuery.sizeOf(context).height * .7,
+          child: Column(
+            children: [
+              const ListTile(
+                leading: Icon(Icons.menu_book_rounded),
+                title: Text('اختر السورة'),
+                subtitle: Text('ثم حدّد الآية التي تبدأ منها التلاوة'),
+              ),
+              const Divider(height: 1),
+              Expanded(
+                child: ListView.builder(
+                  itemCount: QuranIndex.surahs.length,
+                  itemBuilder: (context, index) {
+                    final item = QuranIndex.surahs[index];
+                    return ListTile(
+                      leading: CircleAvatar(child: Text('${item.number}')),
+                      title: Text('سورة ${item.name}'),
+                      subtitle: Text('${item.verses} آية'),
+                      trailing: const Icon(Icons.chevron_left_rounded),
+                      onTap: () => Navigator.pop(context, item),
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+    if (surah == null || !context.mounted) return;
+
+    final controller = TextEditingController(text: '1');
+    final ayah = await showDialog<int>(
+      context: context,
+      builder: (dialogContext) => Directionality(
+        textDirection: TextDirection.rtl,
+        child: AlertDialog(
+          title: Text('سورة ${surah.name}'),
+          content: TextField(
+            controller: controller,
+            autofocus: true,
+            keyboardType: TextInputType.number,
+            decoration: InputDecoration(
+              labelText: 'رقم الآية',
+              helperText: 'من 1 إلى ${surah.verses}',
+              border: const OutlineInputBorder(),
+            ),
+            onSubmitted: (value) => Navigator.pop(dialogContext, int.tryParse(value)),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: const Text('إلغاء'),
+            ),
+            FilledButton(
+              onPressed: () => Navigator.pop(
+                dialogContext,
+                int.tryParse(controller.text.trim()),
+              ),
+              child: const Text('تشغيل من الآية'),
+            ),
+          ],
+        ),
+      ),
+    );
+    controller.dispose();
+    if (ayah == null || !context.mounted) return;
+    if (ayah < 1 || ayah > surah.verses) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('أدخل رقم آية من 1 إلى ${surah.verses}.')),
+      );
+      return;
+    }
+    try {
+      await audioService.playAyah(surah.number, ayah);
+    } catch (_) {
+      if (!context.mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('تعذر تشغيل الآية، تحقق من اتصال الإنترنت ثم أعد المحاولة.')),
+      );
+    }
   }
 }
 
@@ -663,7 +821,7 @@ class _ReciterControls extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  QuranAudioService.reciterName,
+                  audioService.reciterName,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                   style: Theme.of(
@@ -671,11 +829,13 @@ class _ReciterControls extends StatelessWidget {
                   ).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w800),
                 ),
                 Text(
-                  loading ? 'جارٍ تحميل التلاوة…' : 'تلاوة الصفحة $pageNumber',
+                  loading
+                      ? 'جارٍ تحميل التلاوة…'
+                      : audioService.playbackDescription,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: colors.onSurfaceVariant,
-                        fontSize: 9.5,
-                      ),
+                    color: colors.onSurfaceVariant,
+                    fontSize: 9.5,
+                  ),
                 ),
               ],
             ),
@@ -690,23 +850,26 @@ class _ReciterControls extends StatelessWidget {
             icon: loading
                 ? Icons.hourglass_top_rounded
                 : playing
-                    ? Icons.pause_rounded
-                    : Icons.play_arrow_rounded,
+                ? Icons.pause_rounded
+                : Icons.play_arrow_rounded,
             emphasized: true,
-            onPressed:
-                loading ? null : () => audioService.togglePage(pageNumber),
+            onPressed: loading
+                ? null
+                : () => audioService.togglePage(pageNumber),
           ),
           _PlayerIcon(
             tooltip: 'إيقاف التلاوة',
             icon: Icons.stop_rounded,
-            onPressed:
-                audioService.playingPage == null ? null : audioService.stop,
+            onPressed: audioService.playingPage == null
+                ? null
+                : audioService.stop,
           ),
           _PlayerIcon(
             tooltip: 'الصفحة التالية',
             icon: Icons.skip_next_rounded,
-            onPressed:
-                pageNumber < AppConstants.mushafPageCount ? onNext : null,
+            onPressed: pageNumber < AppConstants.mushafPageCount
+                ? onNext
+                : null,
           ),
         ],
       ),
@@ -791,9 +954,9 @@ class _BottomAction extends StatelessWidget {
                     overflow: TextOverflow.fade,
                     softWrap: false,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          fontSize: 9.5,
-                          fontWeight: FontWeight.w700,
-                        ),
+                      fontSize: 9.5,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
                 ],
               ),

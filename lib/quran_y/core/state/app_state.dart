@@ -72,7 +72,10 @@ class AppState extends ChangeNotifier {
     _bookmarkedPages
       ..clear()
       ..addAll(
-        savedBookmarks.map(int.tryParse).whereType<int>().where(
+        savedBookmarks
+            .map(int.tryParse)
+            .whereType<int>()
+            .where(
               (page) =>
                   page >= AppConstants.firstMushafPage &&
                   page <= AppConstants.mushafPageCount,

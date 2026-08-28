@@ -298,9 +298,9 @@ class _PanelHeader extends StatelessWidget {
                 Text(
                   title,
                   style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                        color: Colors.white,
-                        fontWeight: FontWeight.w800,
-                      ),
+                    color: Colors.white,
+                    fontWeight: FontWeight.w800,
+                  ),
                 ),
                 Text(subtitle, style: const TextStyle(color: Colors.white70)),
               ],

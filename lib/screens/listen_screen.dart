@@ -31,6 +31,7 @@ class _ListenScreenState extends State<ListenScreen> {
   void initState() {
     super.initState();
     _surahsFuture = _service.getSurahList();
+    _player.playerStateStream.listen(_handlePlayerState);
     _settingsService.getSelectedReciter().then((r) {
       if (mounted) setState(() => _reciter = r);
     });
@@ -64,13 +65,21 @@ class _ListenScreenState extends State<ListenScreen> {
     }
     final ayah = _ayahs[_index];
     await _player.setUrl(_reciter.audioUrl(ayah.suraNo, ayah.ayaNo));
-    _player.play();
-    _player.playerStateStream.listen((state) {
-      if (state.processingState == ProcessingState.completed && mounted && _isPlaying) {
-        setState(() => _index++);
-        _playCurrent();
-      }
-    });
+    await _player.play();
+  }
+
+  void _handlePlayerState(PlayerState state) {
+    if (state.processingState != ProcessingState.completed ||
+        !mounted ||
+        !_isPlaying) {
+      return;
+    }
+    if (_reciter.playsFullSurah) {
+      setState(() => _isPlaying = false);
+      return;
+    }
+    setState(() => _index++);
+    _playCurrent();
   }
 
   Future<void> _togglePlayPause() async {
@@ -102,7 +111,9 @@ class _ListenScreenState extends State<ListenScreen> {
               future: _surahsFuture,
               builder: (context, snapshot) {
                 if (!snapshot.hasData) {
-                  return const Center(child: CircularProgressIndicator(color: AppColors.gold));
+                  return const Center(
+                    child: CircularProgressIndicator(color: AppColors.gold),
+                  );
                 }
                 final surahs = snapshot.data!;
                 return ListView.builder(
@@ -112,12 +123,20 @@ class _ListenScreenState extends State<ListenScreen> {
                     final playing = _playingSurah?.number == s.number;
                     return ListTile(
                       leading: CircleAvatar(
-                        backgroundColor: playing ? AppColors.gold : AppColors.inkGreen,
-                        foregroundColor: playing ? AppColors.inkGreen : AppColors.cream,
+                        backgroundColor: playing
+                            ? AppColors.gold
+                            : AppColors.inkGreen,
+                        foregroundColor: playing
+                            ? AppColors.inkGreen
+                            : AppColors.cream,
                         child: Text('${s.number}'),
                       ),
                       title: Text(s.nameAr),
-                      trailing: Icon(playing && _isPlaying ? Icons.pause_circle : Icons.play_circle_outline),
+                      trailing: Icon(
+                        playing && _isPlaying
+                            ? Icons.pause_circle
+                            : Icons.play_circle_outline,
+                      ),
                       onTap: () => _playSurah(s),
                     );
                   },
@@ -133,12 +152,15 @@ class _ListenScreenState extends State<ListenScreen> {
                 children: [
                   Expanded(
                     child: Text(
-                      '${_playingSurah!.nameAr} — آية ${_index + 1} من ${_ayahs.length} — ${_reciter.nameAr}',
+                      '${_playingSurah!.nameAr} — ${_reciter.playsFullSurah ? 'السورة كاملة' : 'آية ${_index + 1} من ${_ayahs.length}'} — ${_reciter.nameAr}',
                       style: const TextStyle(color: AppColors.cream),
                     ),
                   ),
                   IconButton(
-                    icon: Icon(_isPlaying ? Icons.pause : Icons.play_arrow, color: AppColors.gold),
+                    icon: Icon(
+                      _isPlaying ? Icons.pause : Icons.play_arrow,
+                      color: AppColors.gold,
+                    ),
                     onPressed: _togglePlayPause,
                   ),
                   IconButton(
