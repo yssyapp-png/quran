@@ -37,10 +37,15 @@ class _KhatmaScreenState extends State<KhatmaScreen> {
       context: context,
       builder: (dialogContext) => AlertDialog(
         title: const Text('إعادة ضبط الختمة'),
-        content: const Text('سيتم مسح كل الصفحات المسجّلة كمقروءة والبدء من جديد. متابعة؟'),
+        content: const Text(
+            'سيتم مسح كل الصفحات المسجّلة كمقروءة والبدء من جديد. متابعة؟'),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(dialogContext, false), child: const Text('إلغاء')),
-          TextButton(onPressed: () => Navigator.pop(dialogContext, true), child: const Text('إعادة الضبط')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext, false),
+              child: const Text('إلغاء')),
+          TextButton(
+              onPressed: () => Navigator.pop(dialogContext, true),
+              child: const Text('إعادة الضبط')),
         ],
       ),
     );
@@ -67,7 +72,8 @@ class _KhatmaScreenState extends State<KhatmaScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.gold));
+            return const Center(
+                child: CircularProgressIndicator(color: AppColors.gold));
           }
           final readCount = snapshot.data!.length;
           final progress = readCount / kMushafPageCount;
@@ -90,7 +96,8 @@ class _KhatmaScreenState extends State<KhatmaScreen> {
                         color: AppColors.inkGreen,
                       ),
                       Text('${(progress * 100).toStringAsFixed(1)}%',
-                          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold)),
+                          style: const TextStyle(
+                              fontSize: 22, fontWeight: FontWeight.bold)),
                     ],
                   ),
                 ),
@@ -106,7 +113,8 @@ class _KhatmaScreenState extends State<KhatmaScreen> {
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppColors.inkGreen,
                     foregroundColor: AppColors.cream,
-                    padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
+                    padding: const EdgeInsets.symmetric(
+                        horizontal: 20, vertical: 14),
                   ),
                 ),
               ],

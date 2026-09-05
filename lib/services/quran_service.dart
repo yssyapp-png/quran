@@ -10,7 +10,8 @@ class QuranService {
   Future<String> getAyahTafsir(int surahNumber, int ayahNumber,
       {String tafsirEdition = 'ar.muyassar'}) async {
     final res = await http
-        .get(Uri.parse('$_baseUrl/ayah/$surahNumber:$ayahNumber/$tafsirEdition'))
+        .get(
+            Uri.parse('$_baseUrl/ayah/$surahNumber:$ayahNumber/$tafsirEdition'))
         .timeout(const Duration(seconds: 12));
     if (res.statusCode != 200) {
       throw Exception('تعذر تحميل التفسير');

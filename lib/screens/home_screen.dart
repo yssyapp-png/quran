@@ -56,7 +56,8 @@ class _HomeScreenState extends State<HomeScreen> {
               if (page != null && context.mounted) {
                 Navigator.push(
                   context,
-                  MaterialPageRoute(builder: (_) => MushafPageScreen(initialPage: page)),
+                  MaterialPageRoute(
+                      builder: (_) => MushafPageScreen(initialPage: page)),
                 );
               }
             },
@@ -71,7 +72,8 @@ class _HomeScreenState extends State<HomeScreen> {
           ),
           IconButton(
             tooltip: isDark ? 'الوضع النهاري' : 'الوضع الليلي',
-            icon: Icon(isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
+            icon: Icon(
+                isDark ? Icons.light_mode_outlined : Icons.dark_mode_outlined),
             onPressed: () => themeController.toggle(),
           ),
         ],
@@ -84,12 +86,14 @@ class _HomeScreenState extends State<HomeScreen> {
         onPressed: () async {
           int startPage = 1;
           if (_lastRead != null) {
-            startPage = await _service.getAyahPage(_lastRead!.suraNo, _lastRead!.ayaNo);
+            startPage =
+                await _service.getAyahPage(_lastRead!.suraNo, _lastRead!.ayaNo);
           }
           if (!mounted) return;
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => MushafPageScreen(initialPage: startPage)),
+            MaterialPageRoute(
+                builder: (_) => MushafPageScreen(initialPage: startPage)),
           );
         },
       ),
@@ -106,7 +110,8 @@ class _HomeScreenState extends State<HomeScreen> {
                 filled: true,
                 border: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(18),
-                  borderSide: BorderSide(color: AppColors.gold.withOpacity(0.4)),
+                  borderSide:
+                      BorderSide(color: AppColors.gold.withOpacity(0.4)),
                 ),
               ),
               onChanged: (v) => setState(() => _query = v.trim()),

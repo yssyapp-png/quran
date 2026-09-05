@@ -47,10 +47,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
             child: Row(
               children: [
-                Icon(Icons.accessibility_new_outlined, color: AppColors.inkGreen, size: 20),
+                Icon(Icons.accessibility_new_outlined,
+                    color: AppColors.inkGreen, size: 20),
                 SizedBox(width: 6),
                 Text('إعدادات الوضوح وضعاف البصر',
-                    style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.inkGreen)),
+                    style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: AppColors.inkGreen)),
               ],
             ),
           ),
@@ -98,12 +101,15 @@ class _SettingsScreenState extends State<SettingsScreen> {
           const Divider(),
           const Padding(
             padding: EdgeInsets.fromLTRB(16, 12, 16, 4),
-            child: Text('القارئ', style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.inkGreen)),
+            child: Text('القارئ',
+                style: TextStyle(
+                    fontWeight: FontWeight.bold, color: AppColors.inkGreen)),
           ),
           if (_selected == null)
             const Padding(
               padding: EdgeInsets.all(16),
-              child: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+              child: Center(
+                  child: CircularProgressIndicator(color: AppColors.gold)),
             )
           else
             ...Reciters.all.map((r) => RadioListTile<String>(

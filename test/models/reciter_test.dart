@@ -2,7 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:quran/models/reciter.dart';
 
 void main() {
-  test('audioUrl يبني رابط everyayah.com بالصيغة الصحيحة (سورة/آية بثلاث خانات)', () {
+  test(
+      'audioUrl يبني رابط everyayah.com بالصيغة الصحيحة (سورة/آية بثلاث خانات)',
+      () {
     const reciter = Reciter(
       id: 'test',
       nameAr: 'قارئ تجريبي',
@@ -14,7 +16,9 @@ void main() {
     );
   });
 
-  test('audioUrl يضبط الأصفار الناقصة حتى لأرقام السور/الآيات الكبيرة (٣ أرقام)', () {
+  test(
+      'audioUrl يضبط الأصفار الناقصة حتى لأرقام السور/الآيات الكبيرة (٣ أرقام)',
+      () {
     const reciter = Reciter(
       id: 'test',
       nameAr: 'قارئ تجريبي',

@@ -26,7 +26,8 @@ void main() {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.error_outline, color: AppColors.inkGreen, size: 40),
+                const Icon(Icons.error_outline,
+                    color: AppColors.inkGreen, size: 40),
                 const SizedBox(height: 12),
                 const Text('حدث خطأ غير متوقع أثناء عرض هذا الجزء',
                     textAlign: TextAlign.center,

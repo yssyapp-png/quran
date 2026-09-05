@@ -64,11 +64,15 @@ class _SearchScreenState extends State<SearchScreen> {
   /// يبني قائمة الأجزاء النصية للآية مع تمييز الجزء المطابق للبحث بلون
   /// ذهبي غامق. [strokeWidth] > 0 يحوّل كل الأجزاء (الأساسية والمميَّزة)
   /// إلى نمط الحدّ بدل التعبئة (طبقة "فائقة السماكة").
-  List<TextSpan> _spans(String text, QuranFontBoldness boldness, {double strokeWidth = 0}) {
+  List<TextSpan> _spans(String text, QuranFontBoldness boldness,
+      {double strokeWidth = 0}) {
     final ayahStyle = _ayahResultStyle(boldness);
-    final baseStyle = strokeWidth > 0 ? _asStroke(ayahStyle, strokeWidth) : ayahStyle;
-    final highlightBase = TextStyle(color: AppColors.gold, fontWeight: boldness.fontWeight);
-    final highlightStyle = strokeWidth > 0 ? _asStroke(highlightBase, strokeWidth) : highlightBase;
+    final baseStyle =
+        strokeWidth > 0 ? _asStroke(ayahStyle, strokeWidth) : ayahStyle;
+    final highlightBase =
+        TextStyle(color: AppColors.gold, fontWeight: boldness.fontWeight);
+    final highlightStyle =
+        strokeWidth > 0 ? _asStroke(highlightBase, strokeWidth) : highlightBase;
 
     if (_query.isEmpty) {
       return [TextSpan(text: text, style: baseStyle)];
@@ -79,7 +83,9 @@ class _SearchScreenState extends State<SearchScreen> {
     }
     return [
       TextSpan(text: text.substring(0, idx), style: baseStyle),
-      TextSpan(text: text.substring(idx, idx + _query.length), style: highlightStyle),
+      TextSpan(
+          text: text.substring(idx, idx + _query.length),
+          style: highlightStyle),
       TextSpan(text: text.substring(idx + _query.length), style: baseStyle),
     ];
   }
@@ -100,9 +106,13 @@ class _SearchScreenState extends State<SearchScreen> {
           children: [
             RichText(
               textAlign: TextAlign.right,
-              text: TextSpan(children: _spans(text, boldness, strokeWidth: boldness.strokeWidth)),
+              text: TextSpan(
+                  children: _spans(text, boldness,
+                      strokeWidth: boldness.strokeWidth)),
             ),
-            RichText(textAlign: TextAlign.right, text: TextSpan(children: _spans(text, boldness))),
+            RichText(
+                textAlign: TextAlign.right,
+                text: TextSpan(children: _spans(text, boldness))),
           ],
         );
       },

@@ -28,7 +28,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
   Future<_LibraryData> _load() async {
     final lastRead = await _bookmarkService.getLastRead();
     final bookmarks = await _bookmarkService.getBookmarks();
-    return _LibraryData(lastRead: lastRead, bookmarks: bookmarks.reversed.toList());
+    return _LibraryData(
+        lastRead: lastRead, bookmarks: bookmarks.reversed.toList());
   }
 
   Future<void> _openBookmark(Bookmark b) async {
@@ -48,7 +49,8 @@ class _LibraryScreenState extends State<LibraryScreen> {
         future: _future,
         builder: (context, snapshot) {
           if (!snapshot.hasData) {
-            return const Center(child: CircularProgressIndicator(color: AppColors.gold));
+            return const Center(
+                child: CircularProgressIndicator(color: AppColors.gold));
           }
           final data = snapshot.data!;
           if (data.lastRead == null && data.bookmarks.isEmpty) {
@@ -69,17 +71,21 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                   child: Text('متابعة القراءة',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.inkGreen)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.inkGreen)),
                 ),
                 Card(
                   color: AppColors.inkGreen,
                   child: ListTile(
-                    leading: const Icon(Icons.auto_stories, color: AppColors.gold),
+                    leading:
+                        const Icon(Icons.auto_stories, color: AppColors.gold),
                     title: Text(data.lastRead!.suraName,
                         style: const TextStyle(color: AppColors.cream)),
                     subtitle: Text('آية ${data.lastRead!.ayaNo}',
                         style: const TextStyle(color: AppColors.cream)),
-                    trailing: const Icon(Icons.chevron_left, color: AppColors.gold),
+                    trailing:
+                        const Icon(Icons.chevron_left, color: AppColors.gold),
                     onTap: () => _openBookmark(data.lastRead!),
                   ),
                 ),
@@ -89,11 +95,14 @@ class _LibraryScreenState extends State<LibraryScreen> {
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                   child: Text('العلامات المرجعية',
-                      style: TextStyle(fontWeight: FontWeight.bold, color: AppColors.inkGreen)),
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.inkGreen)),
                 ),
                 ...data.bookmarks.map((b) => Card(
                       child: ListTile(
-                        leading: const Icon(Icons.bookmark, color: AppColors.inkGreen),
+                        leading: const Icon(Icons.bookmark,
+                            color: AppColors.inkGreen),
                         title: Text(b.suraName),
                         subtitle: Text('آية ${b.ayaNo}'),
                         trailing: const Icon(Icons.chevron_left),

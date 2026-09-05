@@ -90,8 +90,7 @@ void main() {
         final darkBytes = dark.readAsBytesSync();
 
         expect(lightBytes, isNot(equals(darkBytes)),
-            reason:
-                'الصورة الليلية للصفحة $n مطابقة تمامًا للنهارية — يبدو أن '
+            reason: 'الصورة الليلية للصفحة $n مطابقة تمامًا للنهارية — يبدو أن '
                 'الانعكاس اللوني لم يُطبَّق على هذه الصفحة.');
       });
     }

@@ -11,12 +11,14 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  test('getSelectedReciter يرجع القارئ الافتراضي عند عدم وجود اختيار محفوظ', () async {
+  test('getSelectedReciter يرجع القارئ الافتراضي عند عدم وجود اختيار محفوظ',
+      () async {
     final reciter = await service.getSelectedReciter();
     expect(reciter, Reciters.defaultReciter);
   });
 
-  test('setSelectedReciter/getSelectedReciter يحفظان ويرجعان نفس القارئ', () async {
+  test('setSelectedReciter/getSelectedReciter يحفظان ويرجعان نفس القارئ',
+      () async {
     await service.setSelectedReciter(Reciters.saadGhamdi);
     final reciter = await service.getSelectedReciter();
     expect(reciter.id, Reciters.saadGhamdi.id);
