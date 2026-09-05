@@ -17,6 +17,7 @@ if (hasReleaseSigning) {
 
 android {
     namespace = "com.quran.app"
+    assetPacks += mutableSetOf(":mushaf_pages_pack")
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -64,4 +65,8 @@ kotlin {
 
 flutter {
     source = "../.."
+}
+
+dependencies {
+    implementation("com.google.android.play:asset-delivery-ktx:2.3.0")
 }
