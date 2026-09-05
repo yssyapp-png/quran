@@ -116,7 +116,8 @@ class _TafsirBodyState extends State<_TafsirBody> {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Padding(
                   padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Center(child: CircularProgressIndicator(color: AppColors.gold)),
+                  child: Center(
+                      child: CircularProgressIndicator(color: AppColors.gold)),
                 );
               }
               if (snapshot.hasError) {

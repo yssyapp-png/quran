@@ -19,7 +19,8 @@ void main() {
   });
 
   test('toggleBookmark يضيف علامة جديدة غير موجودة', () async {
-    await service.toggleBookmark(Bookmark(suraNo: 2, suraName: 'البقرة', ayaNo: 255));
+    await service
+        .toggleBookmark(Bookmark(suraNo: 2, suraName: 'البقرة', ayaNo: 255));
     final list = await service.getBookmarks();
     expect(list, hasLength(1));
     expect(list.first.key, '2:255');
@@ -34,7 +35,8 @@ void main() {
 
   test('isBookmarked يعكس حالة العلامة بدقة', () async {
     expect(await service.isBookmarked(1, 1), isFalse);
-    await service.toggleBookmark(Bookmark(suraNo: 1, suraName: 'الفاتحة', ayaNo: 1));
+    await service
+        .toggleBookmark(Bookmark(suraNo: 1, suraName: 'الفاتحة', ayaNo: 1));
     expect(await service.isBookmarked(1, 1), isTrue);
   });
 
@@ -48,7 +50,8 @@ void main() {
     expect(last.suraName, 'آل عمران');
   });
 
-  test('getReadPages يبدأ فارغاً ثم markPageRead يضيف صفحات دون تكرار', () async {
+  test('getReadPages يبدأ فارغاً ثم markPageRead يضيف صفحات دون تكرار',
+      () async {
     expect(await service.getReadPages(), isEmpty);
     await service.markPageRead(1);
     await service.markPageRead(2);

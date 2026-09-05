@@ -13,7 +13,8 @@ void main() {
     SharedPreferences.setMockInitialValues({});
   });
 
-  testWidgets('يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها', (WidgetTester tester) async {
+  testWidgets('يفتح التطبيق ويعرض الشاشة الرئيسية بعنوانها',
+      (WidgetTester tester) async {
     await tester.pumpWidget(const QuranApp());
     // ملاحظة: لا نستخدم pumpAndSettle هنا عمداً — أثناء تحميل قائمة السور
     // (Future) تُعرض CircularProgressIndicator، وهي حركة متكررة بلا نهاية

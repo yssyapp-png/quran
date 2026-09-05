@@ -9,8 +9,7 @@ import 'package:quran/services/quran_local_service.dart';
 /// يزيل علامات التشكيل العربية (الفتحة، الضمة، الشدة...) من نص، حتى تُقارَن
 /// أسماء السور بحروفها الأساسية فقط دون التأثر بترتيب علامات Unicode
 /// التوافقية (combining marks) التي قد تختلف شكلياً رغم تطابق المعنى.
-String _stripTashkeel(String text) =>
-    text.replaceAll(RegExp(r'[ً-ْ]'), '');
+String _stripTashkeel(String text) => text.replaceAll(RegExp(r'[ً-ْ]'), '');
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();

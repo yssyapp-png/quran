@@ -4,7 +4,8 @@ class Reciter {
   final String id; // معرف ثابت يُستخدم في التخزين (لا يتغير حتى لو تغير الاسم)
   final String nameAr;
   final String everyayahFolder; // اسم مجلد التلاوة في everyayah.com
-  final bool supportsAyahTiming; // هل تتوفر بيانات توقيت للتتبع أثناء التلاوة (Karaoke)
+  final bool
+      supportsAyahTiming; // هل تتوفر بيانات توقيت للتتبع أثناء التلاوة (Karaoke)
 
   const Reciter({
     required this.id,

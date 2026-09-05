@@ -18,7 +18,8 @@ class IndexScreen extends StatefulWidget {
   State<IndexScreen> createState() => _IndexScreenState();
 }
 
-class _IndexScreenState extends State<IndexScreen> with SingleTickerProviderStateMixin {
+class _IndexScreenState extends State<IndexScreen>
+    with SingleTickerProviderStateMixin {
   final QuranLocalService _service = QuranLocalService();
   late final TabController _tabController;
   late Future<List<LocalSurahInfo>> _surahsFuture;
@@ -90,7 +91,8 @@ class _IndexScreenState extends State<IndexScreen> with SingleTickerProviderStat
             return ListTile(
               leading: CircleAvatar(
                 backgroundColor: AppColors.gold.withOpacity(0.15),
-                child: Text('${s.number}', style: const TextStyle(color: AppColors.gold)),
+                child: Text('${s.number}',
+                    style: const TextStyle(color: AppColors.gold)),
               ),
               title: Text(s.nameAr, textAlign: TextAlign.right),
               subtitle: Text(
@@ -127,7 +129,8 @@ class _IndexScreenState extends State<IndexScreen> with SingleTickerProviderStat
             return ListTile(
               leading: CircleAvatar(
                 backgroundColor: AppColors.gold.withOpacity(0.15),
-                child: Text('${j.number}', style: const TextStyle(color: AppColors.gold)),
+                child: Text('${j.number}',
+                    style: const TextStyle(color: AppColors.gold)),
               ),
               title: Text('الجزء ${j.number}', textAlign: TextAlign.right),
               subtitle: Text(
